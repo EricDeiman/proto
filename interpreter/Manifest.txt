@@ -1,0 +1,3 @@
+Main-class: Main
+Class-Path: ../jars/Minefield.jar ../jars/common.jar ../jars/antlr-runtime-4.7.jar
+

@@ -15,33 +15,29 @@
     # You should have received a copy of the GNU General Public License along with the
     # minefield programming language. If not, see <https://www.gnu.org/licenses/>
 
-ANTLR4:=java org.antlr.v4.Tool
-ANTLR4FLAGS:=-visitor -listener -package parser
-
-GRAMMAR:=$(wildcard *.g4)
-PROJECTNAME:=$(GRAMMAR:.g4=)
-JARNAME:=$(PROJECTNAME).jar
-
-JAVAC:=javac
-JAVACFLAGS:=-Xlint
-
+JAVAC=javac
+JARS:=../jars/
+DEPENDJARS:=$(JARS)Minefield.jar
+JAVACFLAGS:=-cp $(CLASSPATH)$(DEPENDJARS) -Xlint
 JAR=jar
 JARFLAGS=cf
+CP:=cp
+
+PROJECTNAME:=$(shell basename `pwd`)
+SOURCE:=$(wildcard *.java)
+JARNAME:=$(PROJECTNAME).jar
 
 .DEFAULT : $(JARNAME)
 
-$(JARNAME) : $(GRAMMAR)
-	$(ANTLR4) $(ANTLR4FLAGS) $<
-	$(JAVAC) $(JAVACFLAGS) *.java
-	$(JAR) $(JARFLAGS) $(JARNAME) ../parser/*.class
-	cp $(JARNAME) ../jars/.
+$(JARNAME) : $(SOURCE) $(DEPENDJARS)
+	$(JAVAC) $(JAVACFLAGS) $(SOURCE)
+	$(JAR) $(JARFLAGS) $@ ../common/*.class
+	$(CP) $(JARNAME) $(JARS)
 
 .PHONY : clean scrub
 
 clean :
 	rm -f *.class
-	rm -f *.java
-	rm -f *.tokens
 
 scrub : clean
 	rm -f $(JARNAME)
