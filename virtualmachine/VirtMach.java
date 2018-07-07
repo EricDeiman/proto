@@ -24,8 +24,9 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 import common.ByteCodes;
-import common.VMImageBuffer;
 import common.DisAsm;
+import common.RunTimeTypes;
+import common.VMImageBuffer;
 import common.Version;
 
 public class VirtMach implements Version {
@@ -36,6 +37,7 @@ public class VirtMach implements Version {
         disAsm = new DisAsm( code );
         stack = new ArrayDeque< Integer >();
         byteCodesCache = ByteCodes.Codes.values();
+        runTimeTypesCache = RunTimeTypes.values();
         this.trace = trace;
         this.os = os;
 
@@ -56,6 +58,10 @@ public class VirtMach implements Version {
     }
 
     public Integer go() {
+        RunTimeTypes leftType;
+        Integer leftValue;
+        RunTimeTypes rightType;
+        Integer rightValue;
 
         trace.preProgram( disAsm, stack );
 
@@ -72,13 +78,10 @@ public class VirtMach implements Version {
             case Pop:
                 stack.pop();  // pop the value
                 break;
-            case PrintI:
+            case Print:
+                leftType = runTimeTypesCache[ stack.pop() ];
                 leftValue = stack.pop();
-                os.print( leftValue );
-                break;
-            case PrintS:
-                leftValue = stack.pop();
-                os.print( getString( leftValue ) );
+                print( leftType, leftValue );
                 break;
             case PrintLn:
                 os.println();
@@ -94,6 +97,17 @@ public class VirtMach implements Version {
         return stack.size();
     }
 
+    private void print( RunTimeTypes type, Integer value ) {
+        switch( type ) {
+        case iInteger:
+            os.print( value );
+            break;
+        case iString:
+            os.print( getString( value ) );
+            break;
+        }
+    }
+
     private String getString( Integer location ) {
         StringBuilder sb = new StringBuilder();
         while( code.getByte( location ) != 0 ) {
@@ -104,9 +118,8 @@ public class VirtMach implements Version {
 
     private VMImageBuffer code;
     private Deque< Integer > stack;
-    private Integer leftValue;
-    private Integer rightValue;
     private ByteCodes.Codes[] byteCodesCache;
+    private RunTimeTypes[] runTimeTypesCache;
     private Trace trace;
     private PrintStream os;
     private DisAsm disAsm;

@@ -20,11 +20,14 @@ programming language. If not, see <https://www.gnu.org/licenses/>
 
 grammar Minefield;
 
-prog : expr+ EOF ;
+prog : specialForm+ EOF ;
 
-expr : 'print' INTEGER #printInt
-     | 'print' STRING  #printStr
-     | 'println'       #printLn
+specialForm : 'print' expr #printExpr
+            | 'println' #printLn
+            ;
+
+expr : INTEGER #immInt
+     | STRING  #immStr
      ;
 
 INTEGER : '-'? DIGIT(DIGIT|'_')* ;

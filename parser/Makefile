@@ -16,7 +16,7 @@
     # minefield programming language. If not, see <https://www.gnu.org/licenses/>
 
 ANTLR4:=java org.antlr.v4.Tool
-ANTLR4FLAGS:=-visitor -listener -package parser
+ANTLR4FLAGS:=-visitor -no-listener -package parser
 
 GRAMMAR:=$(wildcard *.g4)
 PROJECTNAME:=$(GRAMMAR:.g4=)

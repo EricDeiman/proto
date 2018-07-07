@@ -27,8 +27,11 @@ import java.util.Vector;
 
 import common.BackPatch;
 import common.ByteCodes;
-import common.VMImageBuffer;
+import common.ImmInt;
+import common.ImmStr;
 import common.Labeller;
+import common.RunTimeTypes;
+import common.VMImageBuffer;
 import common.Version;
 
 import parser.MinefieldBaseVisitor;
@@ -60,7 +63,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
         code.writeInteger(0);
 
 
-        for( var ectx : ctx.expr() ) {
+        for( var ectx : ctx.specialForm() ) {
             visit( ectx );
         }
         code.writeByte(ByteCodes.Codes.Halt);
@@ -78,22 +81,28 @@ public class Compile extends MinefieldBaseVisitor< Object >
         return null;
     }
 
-
     @Override
-    public Object visitPrintInt(MinefieldParser.PrintIntContext ctx) {
-        var value = Integer.valueOf( ctx.INTEGER().getText().replace( "_", "" ) );
-        code.writeByte( ByteCodes.Codes.Push ).writeInteger( value )
-            .writeByte( ByteCodes.Codes.PrintI );
+    public Object visitPrintExpr( MinefieldParser.PrintExprContext ctx ) {
+        visit( ctx.expr() );
+        code.writeByte( ByteCodes.Codes.Print );
 
         return null;
     }
 
     @Override
-    public Object visitPrintStr(MinefieldParser.PrintStrContext ctx) {
+    public Object visitImmInt( MinefieldParser.ImmIntContext ctx ) {
+        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
+        code.writeByte( ByteCodes.Codes.Push )
+            .writeInteger( value )
+            .writeByte( ByteCodes.Codes.Push )
+            .writeInteger( RunTimeTypes.iInteger.ordinal() );
+        return null;
+    }
+
+    @Override
+    public Object visitImmStr( MinefieldParser.ImmStrContext ctx ) {
         var value = ctx.STRING().getText();
-        value = value.substring( 1 );
-        value = value.substring( 0, value.length() - 1 );
-        value = value.intern();
+        value = value.substring( 1, value.length() - 1 ).intern();
 
         String label = null;
         if( !constantPool.containsValue( value ) ) {
@@ -110,7 +119,9 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
         code.writeByte( ByteCodes.Codes.Push );
         backPatches.addBackPatch( label, code.getPointer() );
-        code.writeInteger( 0 ).writeByte( ByteCodes.Codes.PrintS );
+        code.writeInteger( 0 )
+            .writeByte( ByteCodes.Codes.Push )
+            .writeInteger( RunTimeTypes.iString.ordinal() );
 
         return null;
     }

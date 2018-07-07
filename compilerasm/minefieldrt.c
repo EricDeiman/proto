@@ -17,10 +17,50 @@
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
 */
 
-package common;
+#include <stdlib.h>
+#include <stdio.h>
+#include "minefieldrt.h"
 
-public interface Version {
-    final int build = 1;
-    final String name = "minefield";
-    final int sizeOfHeader = 17; // bytes
+stack *mkStack( int elements ) {
+  stack *ptr = ( stack * )malloc( sizeof( stack ) + elements * sizeof( long ) );
+  ptr->size = elements;
+  ptr->top = 0;
+
+  return ptr;
+}
+
+void push( stack *s, long value ) {
+  if( s->top < s->size ) {
+    s->memory[ (s->top)++ ] = value;
+  }
+  else {
+    printf( "error: pushing a value on a full stack\n" );
+    exit( -1 );
+  }
+}
+
+long pop( stack *s ) {
+  if( 0 <= s->top ) {
+    return s->memory[ --(s->top) ];
+  }
+
+  printf( "error: poping a value from an empty stack\n" );
+  exit( -1 );
+
+  return -1;
+}
+
+void printTos( stack *s ) {
+  long type = pop( s );
+  long value = pop( s );
+
+  switch( type ) {
+  case iInteger:
+    printf( "%1ld", value );
+    break;
+
+  case iString:
+    printf( "%s", ( char * )value );
+    break;
+  }
 }

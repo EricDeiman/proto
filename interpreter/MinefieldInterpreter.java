@@ -20,41 +20,54 @@
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
+import common.ImmInt;
+import common.ImmStr;
+import common.MeflExpr;
 import common.Version;
+
 import parser.MinefieldParser;
 import parser.MinefieldBaseVisitor;
 
-public class MinefieldInterpreter extends MinefieldBaseVisitor<Object>
+public class MinefieldInterpreter extends MinefieldBaseVisitor< MeflExpr >
                                   implements Version {
 
     @Override
-    public Object visitProg( MinefieldParser.ProgContext ctx ) {
-        for( var ectx : ctx.expr() ) {
+    public MeflExpr visitProg( MinefieldParser.ProgContext ctx ) {
+        printVisitor = new PrintVisitor( System.out );
+
+        for( var ectx : ctx.specialForm() ) {
             visit( ectx );
         }
         return null;
     }
 
     @Override
-    public Object visitPrintInt( MinefieldParser.PrintIntContext ctx ) {
-        var value = Integer.valueOf( ctx.INTEGER().getText().replace( "_", "" ) );
-        System.out.print( value );
+    public MeflExpr visitPrintExpr( MinefieldParser.PrintExprContext ctx ) {
+        visit( ctx.expr() ).accept( printVisitor );
 
         return null;
     }
 
     @Override
-    public Object visitPrintStr( MinefieldParser.PrintStrContext ctx ) {
-        var output = ctx.STRING().getSymbol().getText().replace("\"", "");
-        System.out.print( output );
-
-        return null;
-    }
-
-    @Override
-    public Object visitPrintLn( MinefieldParser.PrintLnContext ctx) {
+    public MeflExpr visitPrintLn( MinefieldParser.PrintLnContext ctx) {
         System.out.println();
 
         return null;
     }
+
+    @Override
+    public MeflExpr visitImmInt( MinefieldParser.ImmIntContext ctx ) {
+        return new ImmInt( Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) ) );
+    }
+
+    @Override
+    public MeflExpr visitImmStr( MinefieldParser.ImmStrContext ctx ) {
+        return new ImmStr( stripQuotes( ctx.getText() ) );
+    }
+
+    private String stripQuotes( String subject ) {
+        return subject.substring( 1, subject.length() - 1 );
+    }
+
+    private PrintVisitor printVisitor;
 }

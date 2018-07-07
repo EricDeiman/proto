@@ -25,12 +25,15 @@ CP:=cp
 
 PROJECTNAME:=$(shell basename `pwd`)
 SOURCE:=$(wildcard *.java)
+CLASSES:=$(SOURCE:.java=.class)
 JARNAME:=$(PROJECTNAME).jar
+
+%.class:%.java
+	$(JAVAC) $(JAVACFLAGS) $^
 
 .DEFAULT : $(JARNAME)
 
-$(JARNAME) : $(SOURCE) $(DEPENDJARS)
-	$(JAVAC) $(JAVACFLAGS) $(SOURCE)
+$(JARNAME) : $(CLASSES) $(DEPENDJARS)
 	$(JAR) $(JARFLAGS) $@ ../common/*.class
 	$(CP) $(JARNAME) $(JARS)
 

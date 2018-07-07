@@ -15,24 +15,10 @@
 
   You should have received a copy of the GNU General Public License along with the
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
- */
+*/
 
 package common;
 
-public class ByteCodes {
-    public enum Codes {
-        Halt,    // 0x00
-        Push,    // 0x01
-        Pop,     // 0x02
-        Print,  // 0x03
-        PrintLn, // 0x04
-    }
-
-    public static final boolean HasOperand[] = {
-        false,
-        true,
-        false,
-        false,
-        false,
-    };    
+public interface MeflExpr {
+    void accept( MeflExprVisitor visitor );
 }

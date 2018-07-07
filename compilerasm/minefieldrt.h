@@ -15,24 +15,27 @@
 
   You should have received a copy of the GNU General Public License along with the
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
- */
+*/
 
-package common;
+#ifndef MINEFIELD_H
+#define MINEFIELD_H
 
-public class ByteCodes {
-    public enum Codes {
-        Halt,    // 0x00
-        Push,    // 0x01
-        Pop,     // 0x02
-        Print,  // 0x03
-        PrintLn, // 0x04
-    }
+typedef struct {
+  int size;
+  int top;
+  long memory[];
+} stack;
 
-    public static final boolean HasOperand[] = {
-        false,
-        true,
-        false,
-        false,
-        false,
-    };    
-}
+enum RunTimeTypes {
+  iUnknown,
+  iInteger,
+  iString,
+};
+
+stack *mkStack( int );
+void push( stack *, long );
+long pop( stack * );
+
+void printTos( stack * );
+
+#endif

@@ -15,24 +15,26 @@
 
   You should have received a copy of the GNU General Public License along with the
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
- */
+*/
 
-package common;
+import java.io.PrintStream;
 
-public class ByteCodes {
-    public enum Codes {
-        Halt,    // 0x00
-        Push,    // 0x01
-        Pop,     // 0x02
-        Print,  // 0x03
-        PrintLn, // 0x04
+import common.MeflExprVisitor;
+import common.ImmInt;
+import common.ImmStr;
+
+public class PrintVisitor implements MeflExprVisitor {
+    public PrintVisitor( PrintStream os ) {
+        this.os = os;
     }
 
-    public static final boolean HasOperand[] = {
-        false,
-        true,
-        false,
-        false,
-        false,
-    };    
+    public void visit( ImmInt immInt ) {
+        os.print( immInt.get() );
+    }
+
+    public void visit( ImmStr immStr ) {
+        os.print( immStr.get() );
+    }
+
+    private PrintStream os;
 }

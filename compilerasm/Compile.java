@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import common.Labeller;
+import common.RunTimeTypes;
 import common.Version;
 
 import parser.MinefieldBaseVisitor;
@@ -49,12 +50,21 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
         code.append( String.format( "\t.ident \"%s build %d\"\n", name, build ) );
         code.append( "\t.text\n\t.globl main\n\nmain:\n" );
+        
+        // We use register r9 to hold the value stack 
+        code.append( "\tpushq %rbp\n" )
+            .append( "\tmovq %rsp, %rbp\n" )
+            .append( "\tsubq $8, %rsp\n")
+            .append( "\tmovl	$1024, %edi\n" )
+            .append( "\tcall	mkStack@PLT\n")
+            .append( "\tmovq	%rax, -8(%rbp)\n\n" );
 
-        for( var ectx : ctx.expr() ) {
+        for( var ectx : ctx.specialForm() ) {
             visit( ectx );
         }
 
-        code.append( "\tret" );
+        code.append( "\tleaveq\n" )
+            .append( "\tretq\n" );
 
         // Dump the string pool past the end of the executable code
         code.append( "\n\n\t.section .rodata\n" );
@@ -74,36 +84,47 @@ public class Compile extends MinefieldBaseVisitor< Object >
     }
 
     @Override
-    public Object visitPrintInt(MinefieldParser.PrintIntContext ctx) {
-        var value = ctx.INTEGER().getText().replace( "_", "" );
-
-        code.append( "\tmovl $" + value.toString() + ", %esi\n" )
-            .append( "\tleaq " + percentD + "(%rip), %rdi\n" )
-            .append( "\tmovl $0, %eax\n" )
-            .append( "\tcall printf@PLT\n" );
+    public Object visitPrintExpr( MinefieldParser.PrintExprContext ctx ) {
+        visit( ctx.expr() );
+        code.append( "\tmovq -8(%rbp), %rdi\n" )
+            .append( "\tcall printTos@PLT\n\n" );
 
         return null;
     }
 
     @Override
-    public Object visitPrintStr(MinefieldParser.PrintStrContext ctx) {
+    public Object visitImmInt( MinefieldParser.ImmIntContext ctx ) {
+        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
+        code.append( "\tmovq -8(%rbp), %rdi\n" )
+            .append( "\tmovq $" + value + ", %rsi\n" ) // push the value
+            .append( "\tcall push@PLT\n" )
+            .append( "\tmovq $" + RunTimeTypes.iInteger.ordinal() + ", %rsi\n" )  // push the type
+            .append( "\tcall push@PLT\n\n" );
+
+        return null;
+    }
+
+    @Override
+    public Object visitImmStr(MinefieldParser.ImmStrContext ctx) {
         var value = ctx.STRING().getText();
-        value = value.substring( 1 );
-        value = value.substring( 0, value.length() - 1 );
+        value = value.substring( 1, value.length() - 1 ).intern();
 
         var label = constantLookUp( value );
 
-        code.append( "\tleaq " + label + "(%rip), %rdi\n" )
-            .append( "\tmovl $0, %eax\n" )
-            .append( "\tcall printf@PLT\n" );
+        code.append( "\tmovq -8(%rbp), %rdi\n" )
+            .append( "\tleaq " + label + "(%rip), %rsi\n" )
+            .append( "\tcall push@PLT\n" )
+            .append( "\tmovq $" + RunTimeTypes.iString.ordinal() + ", %rsi\n" )  // push the type
+            .append( "\tcall push@PLT\n\n" );
 
         return null;
     }
 
     @Override
     public Object visitPrintLn(MinefieldParser.PrintLnContext ctx) {
-        code.append( "\tmovl $10, %edi\n" )
-            .append( "\tcall putchar@PLT\n" );
+        code.append( "\tmovq $0, %rax\n" )
+            .append( "\tmovl $10, %edi\n" )
+            .append( "\tcall putchar@PLT\n\n" );
         return null;
     }
 
