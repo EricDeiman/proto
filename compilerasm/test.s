@@ -2,9 +2,7 @@
 	.text
 	.section	.rodata
 .LC0:
-	.string	"the value is "
-.LC1:
-	.string	"fourty-two"
+	.string	"4 ^ 3 ^ 2 is "
 	.text
 	.globl	main
 	.type	main, @function
@@ -21,38 +19,41 @@ main:
 	movq	%rsi, -32(%rbp)
 	movl	$1024, %edi
 	call	mkStack@PLT
-	movq	%rax, -16(%rbp)
-	movq	-16(%rbp), %rax
-	movl	$42, %esi
+	movq	%rax, -8(%rbp)
+	movq	-8(%rbp), %rax
+	movl	$4, %esi
 	movq	%rax, %rdi
 	call	push@PLT
-	movq	-16(%rbp), %rax
+	movq	-8(%rbp), %rax
 	movl	$1, %esi
 	movq	%rax, %rdi
 	call	push@PLT
-	leaq	.LC0(%rip), %rdi
-	movl	$0, %eax
-	call	printf@PLT
-	movq	-16(%rbp), %rax
-	movq	%rax, %rdi
-	call	printTos@PLT
-	movl	$10, %edi
-	call	putchar@PLT
-	leaq	.LC1(%rip), %rax
-	movq	%rax, -8(%rbp)
-	movq	-8(%rbp), %rdx
-	movq	-16(%rbp), %rax
-	movq	%rdx, %rsi
+	movq	-8(%rbp), %rax
+	movl	$3, %esi
 	movq	%rax, %rdi
 	call	push@PLT
-	movq	-16(%rbp), %rax
+	movq	-8(%rbp), %rax
+	movl	$1, %esi
+	movq	%rax, %rdi
+	call	push@PLT
+	movq	-8(%rbp), %rax
 	movl	$2, %esi
 	movq	%rax, %rdi
 	call	push@PLT
+	movq	-8(%rbp), %rax
+	movl	$1, %esi
+	movq	%rax, %rdi
+	call	push@PLT
+	movq	-8(%rbp), %rax
+	movq	%rax, %rdi
+	call	meflPow@PLT
+	movq	-8(%rbp), %rax
+	movq	%rax, %rdi
+	call	meflPow@PLT
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	movq	-16(%rbp), %rax
+	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	printTos@PLT
 	movl	$10, %edi

@@ -23,12 +23,18 @@ import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import static java.lang.Math.pow;
+
 import common.ByteCodes;
 import common.DisAsm;
 import common.RunTimeTypes;
 import common.VMImageBuffer;
 import common.Version;
 
+
+/**
+   Our stack discipline is to push the value first and then push the type of the value.
+ */
 public class VirtMach implements Version {
 
     public VirtMach( InputStream in, PrintStream os, Trace trace ) {
@@ -68,7 +74,8 @@ public class VirtMach implements Version {
         loop:
         while( true ) {
             trace.preInstruction( disAsm, stack );
-            switch( byteCodesCache[ code.readByte() ] ) {
+            ByteCodes.Codes op = byteCodesCache[ code.readByte() ];
+            switch( op ) {
             case Halt:
                 break loop;
             case Push:
@@ -76,6 +83,7 @@ public class VirtMach implements Version {
                 stack.push( leftValue );
                 break;
             case Pop:
+                stack.pop();  // pop the type
                 stack.pop();  // pop the value
                 break;
             case Print:
@@ -86,6 +94,21 @@ public class VirtMach implements Version {
             case PrintLn:
                 os.println();
                 break;
+            case Pow:
+            case Mul:
+            case Div:
+            case Rem:
+            case Add:
+            case Sub:
+                rightType = runTimeTypesCache[ stack.pop() ];
+                rightValue = stack.pop();
+                leftType = runTimeTypesCache[ stack.pop() ];
+                leftValue = stack.pop();
+                stack.push( math( leftType, leftValue,
+                                  op,
+                                  rightType, rightValue ) );
+                stack.push( RunTimeTypes.iInteger.ordinal() );
+                break;
             default:
                 break;
             }
@@ -95,6 +118,39 @@ public class VirtMach implements Version {
 
         trace.postProgram( disAsm, stack );
         return stack.size();
+    }
+
+    private int math( RunTimeTypes leftType, int left,
+                      ByteCodes.Codes op,
+                      RunTimeTypes rightType,int right ) {
+        int result = 0;
+
+        if( leftType != rightType || leftType != RunTimeTypes.iInteger ) {
+            throw new Error( "arithmatic only works on 2 integer values" );
+        }
+
+        switch( op ) {
+        case Pow:
+            result = ( int )pow( left, right );
+            break;
+        case Mul:
+            result = left * right;
+            break;
+        case Div:
+            result = left / right;
+            break;
+        case Rem:
+            result = left % right;
+            break;
+        case Add:
+            result = left + right;
+            break;
+        case Sub:
+            result = left - right;
+            break;
+        }
+
+        return result;
     }
 
     private void print( RunTimeTypes type, Integer value ) {

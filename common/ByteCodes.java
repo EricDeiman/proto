@@ -24,13 +24,25 @@ public class ByteCodes {
         Halt,    // 0x00
         Push,    // 0x01
         Pop,     // 0x02
-        Print,  // 0x03
+        Print,   // 0x03
         PrintLn, // 0x04
+        Pow,     // 0x05
+        Mul,     // 0x06
+        Div,     // 0x07
+        Rem,     // 0x08
+        Add,     // 0x09
+        Sub,     // 0x0a
     }
 
     public static final boolean HasOperand[] = {
         false,
         true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false,

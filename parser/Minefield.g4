@@ -26,9 +26,18 @@ specialForm : 'print' expr #printExpr
             | 'println' #printLn
             ;
 
-expr : INTEGER #immInt
+expr : arithExpr #intArith
      | STRING  #immStr
      ;
+
+arithExpr : '(' arithExpr ')'  #arithGroup
+          | <assoc=right> left=arithExpr op='^' right=arithExpr #power
+            // The multiplicative operators
+          | left=arithExpr op=('*' | '/' | '%') right=arithExpr #multi
+            // The additive operators
+          | left=arithExpr op=('+' | '-') right=arithExpr #addi
+          | INTEGER #immInt
+          ;
 
 INTEGER : '-'? DIGIT(DIGIT|'_')* ;
 

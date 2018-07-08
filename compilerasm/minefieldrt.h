@@ -38,4 +38,11 @@ long pop( stack * );
 
 void printTos( stack * );
 
+void meflPow( stack * );
+void meflMul( stack * );
+void meflDiv( stack * );
+void meflRem( stack * );
+void meflAdd( stack * );
+void meflSub( stack * );
+
 #endif

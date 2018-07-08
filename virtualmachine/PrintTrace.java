@@ -35,9 +35,8 @@ public class PrintTrace extends EmptyTrace {
         out.print( "\t" + disAsm.dumpInstruction( false ) );
 
         out.print("  [ ");
-        var iter = stack.descendingIterator();
-        while( iter.hasNext() ) {
-            out.print( String.format( "%d ", iter.next() ) );            
+        for( var i : stack ) {
+            out.print( String.format( "%d ", i ) );            
         }
         out.println(" ]");
 

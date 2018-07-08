@@ -43,6 +43,8 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
         percentD = labelMaker.make();
         constantPool.put( percentD, "%d".intern() );
+
+        howManyRuntimeStacks = 1;
     }
 
     @Override
@@ -51,10 +53,9 @@ public class Compile extends MinefieldBaseVisitor< Object >
         code.append( String.format( "\t.ident \"%s build %d\"\n", name, build ) );
         code.append( "\t.text\n\t.globl main\n\nmain:\n" );
         
-        // We use register r9 to hold the value stack 
         code.append( "\tpushq %rbp\n" )
             .append( "\tmovq %rsp, %rbp\n" )
-            .append( "\tsubq $8, %rsp\n")
+            .append( "\tsubq $" + (8 + howManyRuntimeStacks * 8) + ", %rsp\n")
             .append( "\tmovl	$1024, %edi\n" )
             .append( "\tcall	mkStack@PLT\n")
             .append( "\tmovq	%rax, -8(%rbp)\n\n" );
@@ -105,7 +106,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
     }
 
     @Override
-    public Object visitImmStr(MinefieldParser.ImmStrContext ctx) {
+    public Object visitImmStr( MinefieldParser.ImmStrContext ctx ) {
         var value = ctx.STRING().getText();
         value = value.substring( 1, value.length() - 1 ).intern();
 
@@ -121,10 +122,65 @@ public class Compile extends MinefieldBaseVisitor< Object >
     }
 
     @Override
-    public Object visitPrintLn(MinefieldParser.PrintLnContext ctx) {
+    public Object visitPrintLn( MinefieldParser.PrintLnContext ctx ) {
         code.append( "\tmovq $0, %rax\n" )
             .append( "\tmovl $10, %edi\n" )
             .append( "\tcall putchar@PLT\n\n" );
+        return null;
+    }
+
+    @Override
+    public Object visitArithGroup( MinefieldParser.ArithGroupContext ctx ) {
+        visit( ctx.arithExpr() );
+        return null;
+    }
+
+    @Override
+    public Object visitPower( MinefieldParser.PowerContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+        code.append( "\tmovq -8(%rbp), %rdi\n" )
+            .append( "\tcall meflPow@PLT\n" );
+
+        return null;
+    }
+
+    @Override
+    public Object visitMulti( MinefieldParser.MultiContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+        code.append( "\tmovq -8(%rbp), %rdi\n" );
+
+        switch( ctx.op.getText() ) {
+        case "*":
+            code.append( "\tcall meflMul@PLT\n" );
+            break;
+        case "/":
+            code.append( "\tcall meflDiv@PLT\n" );
+            break;
+        case "%":
+            code.append( "\tcall meflRem@PLT\n" );
+            break;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitAddi( MinefieldParser.AddiContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+        code.append( "\tmovq -8(%rbp), %rdi\n" );
+
+        switch( ctx.op.getText() ) {
+        case "+":
+            code.append( "\tcall meflAdd@PLT\n" );
+            break;
+        case "-":
+            code.append( "\tcall meflSub@PLT\n" );
+            break;
+        }
+
         return null;
     }
 
@@ -163,4 +219,5 @@ public class Compile extends MinefieldBaseVisitor< Object >
     private HashMap<String, String> constantPool;
     private Labeller labelMaker;
     private String percentD;
+    private int howManyRuntimeStacks;
 }

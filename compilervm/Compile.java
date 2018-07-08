@@ -27,8 +27,6 @@ import java.util.Vector;
 
 import common.BackPatch;
 import common.ByteCodes;
-import common.ImmInt;
-import common.ImmStr;
 import common.Labeller;
 import common.RunTimeTypes;
 import common.VMImageBuffer;
@@ -62,7 +60,6 @@ public class Compile extends MinefieldBaseVisitor< Object >
         backPatches.addBackPatch(constants, code.getPointer());
         code.writeInteger(0);
 
-
         for( var ectx : ctx.specialForm() ) {
             visit( ectx );
         }
@@ -76,7 +73,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
             code.writeByte( 0 ); // zero terminate strings in the image
         }
 
-        backPatches.doBackPatches(where, code);
+        backPatches.doBackPatches( where, code );
 
         return null;
     }
@@ -129,6 +126,59 @@ public class Compile extends MinefieldBaseVisitor< Object >
     @Override
     public Object visitPrintLn(MinefieldParser.PrintLnContext ctx) {
         code.writeByte( ByteCodes.Codes.PrintLn );
+
+        return null;
+    }
+
+    @Override
+    public Object visitArithGroup( MinefieldParser.ArithGroupContext ctx ) {
+        visit( ctx.arithExpr() );
+
+        return null;
+    }
+
+    @Override
+    public Object visitPower( MinefieldParser.PowerContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+        code.writeByte( ByteCodes.Codes.Pow );
+
+        return null;
+    }
+
+    @Override
+    public Object visitMulti( MinefieldParser.MultiContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+ 
+        switch( ctx.op.getText() ) {
+        case "*":
+            code.writeByte( ByteCodes.Codes.Mul );
+            break;
+        case "/":
+            code.writeByte( ByteCodes.Codes.Div );
+            break;
+        case "%":
+            code.writeByte( ByteCodes.Codes.Rem );
+            break;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitAddi( MinefieldParser.AddiContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+
+        switch( ctx.op.getText() ) {
+        case "+":
+            code.writeByte( ByteCodes.Codes.Add );
+            break;
+        case "-":
+            code.writeByte( ByteCodes.Codes.Sub );
+            break;
+        }
 
         return null;
     }

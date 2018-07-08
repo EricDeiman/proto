@@ -19,6 +19,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <tgmath.h>
+
 #include "minefieldrt.h"
 
 stack *mkStack( int elements ) {
@@ -63,4 +65,108 @@ void printTos( stack *s ) {
     printf( "%s", ( char * )value );
     break;
   }
+}
+
+char *message = "arithmatic only works on integer types";
+
+void meflPow( stack *s ) {
+  long rightType = pop( s );
+  long rightValue = pop( s );
+  long leftType = pop( s );
+  long leftValue = pop( s );
+
+  if( leftType != rightType || leftType != iInteger ) {
+    printf( "%s", message );
+    exit( -1 );
+  }
+
+  leftValue = ( int )pow( leftValue, rightValue );
+
+  push( s, leftValue );
+  push( s, leftType );
+}
+
+void meflMul( stack *s ) {
+  long rightType = pop( s );
+  long rightValue = pop( s );
+  long leftType = pop( s );
+  long leftValue = pop( s );
+
+  if( leftType != rightType || leftType != iInteger ) {
+    printf( "%s", message );
+    exit( -1 );
+  }
+
+  leftValue = leftValue * rightValue;
+
+  push( s, leftValue );
+  push( s, leftType );
+}
+
+void meflDiv( stack *s ) {
+  long rightType = pop( s );
+  long rightValue = pop( s );
+  long leftType = pop( s );
+  long leftValue = pop( s );
+
+  if( leftType != rightType || leftType != iInteger ) {
+    printf( "%s", message );
+    exit( -1 );
+  }
+
+  leftValue = leftValue / rightValue;
+
+  push( s, leftValue );
+  push( s, leftType );
+}
+
+void meflRem( stack *s ) {
+  long rightType = pop( s );
+  long rightValue = pop( s );
+  long leftType = pop( s );
+  long leftValue = pop( s );
+
+  if( leftType != rightType || leftType != iInteger ) {
+    printf( "%s", message );
+    exit( -1 );
+  }
+
+  leftValue = leftValue % rightValue;
+
+  push( s, leftValue );
+  push( s, leftType );
+}
+
+void meflAdd( stack *s ) {
+  long rightType = pop( s );
+  long rightValue = pop( s );
+  long leftType = pop( s );
+  long leftValue = pop( s );
+
+  if( leftType != rightType || leftType != iInteger ) {
+    printf( "%s", message );
+    exit( -1 );
+  }
+
+  leftValue = leftValue + rightValue;
+
+  push( s, leftValue );
+  push( s, leftType );
+}
+
+void meflSub( stack *s ) {
+  long rightType = pop( s );
+  long rightValue = pop( s );
+  long leftType = pop( s );
+  long leftValue = pop( s );
+
+  if( leftType != rightType || leftType != iInteger ) {
+    printf( "%s", message );
+    exit( -1 );
+  }
+
+  leftValue = leftValue - rightValue;
+
+  push( s, leftValue );
+  push( s, leftType );
 }

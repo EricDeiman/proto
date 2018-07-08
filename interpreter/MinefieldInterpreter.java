@@ -20,20 +20,16 @@
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
-import common.ImmInt;
-import common.ImmStr;
-import common.MeflExpr;
 import common.Version;
 
 import parser.MinefieldParser;
 import parser.MinefieldBaseVisitor;
 
-public class MinefieldInterpreter extends MinefieldBaseVisitor< MeflExpr >
+public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
                                   implements Version {
 
     @Override
-    public MeflExpr visitProg( MinefieldParser.ProgContext ctx ) {
-        printVisitor = new PrintVisitor( System.out );
+    public InterpValue visitProg( MinefieldParser.ProgContext ctx ) {
 
         for( var ectx : ctx.specialForm() ) {
             visit( ectx );
@@ -42,32 +38,64 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< MeflExpr >
     }
 
     @Override
-    public MeflExpr visitPrintExpr( MinefieldParser.PrintExprContext ctx ) {
-        visit( ctx.expr() ).accept( printVisitor );
+    public InterpValue visitPrintExpr( MinefieldParser.PrintExprContext ctx ) {
+        System.out.print( visit( ctx.expr() ).toString() );
 
         return null;
     }
 
     @Override
-    public MeflExpr visitPrintLn( MinefieldParser.PrintLnContext ctx) {
+    public InterpValue visitPrintLn( MinefieldParser.PrintLnContext ctx) {
         System.out.println();
 
         return null;
     }
 
     @Override
-    public MeflExpr visitImmInt( MinefieldParser.ImmIntContext ctx ) {
-        return new ImmInt( Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) ) );
+    public InterpValue visitImmInt( MinefieldParser.ImmIntContext ctx ) {
+        return new InterpInt( Integer.parseInt( ctx.INTEGER().getText()
+                                                             .replace( "_", "" ) ) );
     }
 
     @Override
-    public MeflExpr visitImmStr( MinefieldParser.ImmStrContext ctx ) {
-        return new ImmStr( stripQuotes( ctx.getText() ) );
+    public InterpValue visitImmStr( MinefieldParser.ImmStrContext ctx ) {
+        return new InterpString( stripQuotes( ctx.getText() ) );
+    }
+
+    @Override
+    public InterpValue visitArithGroup( MinefieldParser.ArithGroupContext ctx ) {
+        return visit( ctx.arithExpr() );
+    }
+
+    @Override
+    public InterpValue visitPower( MinefieldParser.PowerContext ctx ) {
+        var left = ( InterpInt )visit( ctx.left );
+        var right = ( InterpInt )visit( ctx.right );
+        var result = left.math( ctx.op.getText(), right );
+
+        return result;
+    }
+
+    @Override
+    public InterpValue visitMulti( MinefieldParser.MultiContext ctx ) {
+        var left = ( InterpInt )visit( ctx.left );
+        var right = ( InterpInt )visit( ctx.right );
+        var result = left.math( ctx.op.getText(), right );
+
+        return result;
+    }
+
+    @Override
+    public InterpValue visitAddi( MinefieldParser.AddiContext ctx ) {
+        var left = ( InterpInt )visit( ctx.left );
+        var right = ( InterpInt )visit( ctx.right );
+        var result = left.math( ctx.op.getText(), right );
+
+        return result;
     }
 
     private String stripQuotes( String subject ) {
         return subject.substring( 1, subject.length() - 1 );
     }
-
-    private PrintVisitor printVisitor;
 }
+
