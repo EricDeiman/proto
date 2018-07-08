@@ -18,8 +18,26 @@
 
 */
 
-public interface InterpValue {
+public class CompStr implements Comp {
+    public boolean compare( InterpValue left, String op, InterpValue right ) {
+        var leftStr = ( ( InterpString )left ).get();
+        var rightStr = ( ( InterpString )right ).get();
 
-    public String toString();
-    public Comp getComp();
+        switch( op ) {
+        case "<":
+            return leftStr.compareTo( rightStr ) < 0;
+        case "<=":
+            return leftStr.compareTo( rightStr ) <= 0;
+        case "?=":
+            return leftStr.compareTo( rightStr ) == 0;
+        case "!=":
+            return leftStr.compareTo( rightStr ) != 0;
+        case ">=":
+            return leftStr.compareTo( rightStr ) >= 0;
+        case ">":
+            return leftStr.compareTo( rightStr ) > 0;
+        }
+
+        return false;
+    }
 }

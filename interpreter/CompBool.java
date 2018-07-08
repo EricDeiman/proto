@@ -18,8 +18,18 @@
 
 */
 
-public interface InterpValue {
+public class CompBool implements Comp {
+    public boolean compare( InterpValue left, String op, InterpValue right ) {
+        var leftBool = ( ( InterpBool )left ).get();
+        var rightBool = ( ( InterpBool )right ).get();
 
-    public String toString();
-    public Comp getComp();
+        switch( op ) {
+        case "?=":
+            return leftBool == rightBool;
+        case "!=":
+            return leftBool != rightBool;
+        default:
+            throw new Error( op + " cannot be used with booleans");
+        }
+    }
 }

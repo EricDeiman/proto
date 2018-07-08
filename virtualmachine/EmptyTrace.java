@@ -41,4 +41,9 @@ public class EmptyTrace implements Trace {
     public void postProgram( DisAsm code, Deque< Integer > stack ) {
         return;
     }
+
+    @Override
+    public void io( String data ) {
+        return;
+    }
 }

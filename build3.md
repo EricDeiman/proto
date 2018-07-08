@@ -1,0 +1,4 @@
+# Comparison operators
+<, <=, >, >=, ?=, !=
+boolean type
+&&, ||

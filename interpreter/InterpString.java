@@ -28,7 +28,12 @@ public class InterpString implements InterpValue {
         return value;
     }
 
-    String get() {
+    @Override
+    public Comp getComp() {
+        return new CompStr();
+    }
+
+    public String get() {
         return value;
     }
 

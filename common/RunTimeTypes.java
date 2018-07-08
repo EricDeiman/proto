@@ -23,4 +23,5 @@ public enum RunTimeTypes {
     iUnknown,
     iInteger,
     iString,
+    iBoolean,
 }

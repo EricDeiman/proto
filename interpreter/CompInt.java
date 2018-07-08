@@ -18,8 +18,26 @@
 
 */
 
-public interface InterpValue {
+public class CompInt implements Comp {
+    public boolean compare( InterpValue left, String op, InterpValue right ) {
+        var leftInt = ( ( InterpInt )left ).get();
+        var rightInt = ( ( InterpInt )right ).get();
 
-    public String toString();
-    public Comp getComp();
+        switch( op ) {
+        case "<":
+            return leftInt < rightInt;
+        case "<=":
+            return leftInt <= rightInt;
+        case "?=":
+            return leftInt == rightInt;
+        case "!=":
+            return leftInt != rightInt;
+        case ">=":
+            return leftInt >= rightInt;
+        case ">":
+            return leftInt > rightInt;
+        }
+
+        return false;
+    }
 }

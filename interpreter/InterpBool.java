@@ -18,10 +18,8 @@
 
 */
 
-import static java.lang.Math.pow;
-
-public class InterpInt implements InterpValue {
-    public InterpInt( int value ) {
+public class InterpBool implements InterpValue {
+    public InterpBool( boolean value ) {
         this.value = value;
     }
 
@@ -32,39 +30,12 @@ public class InterpInt implements InterpValue {
 
     @Override
     public Comp getComp() {
-        return new CompInt();
+        return new CompBool();
     }
 
-    public int get() {
+    public boolean get() {
         return value;
     }
 
-    public InterpInt math( String op, InterpInt operand ) {
-        int result = 0;
-
-        switch( op ) {
-        case "+":
-            result = value + operand.get();
-            break;
-        case "-":
-            result = value - operand.get();
-            break;
-        case "*":
-            result = value * operand.get();
-            break;
-        case "/":
-            result = value / operand.get();
-            break;
-        case "%":
-            result = value % operand.get();
-            break;
-        case "^":
-            result = ( int )pow( value, operand.get() );
-            break;
-        }
-
-        return new InterpInt( result );
-    }
-
-    private int value;
+    private boolean value;
 }

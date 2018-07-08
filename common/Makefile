@@ -34,7 +34,7 @@ JARNAME:=$(PROJECTNAME).jar
 .DEFAULT : $(JARNAME)
 
 $(JARNAME) : $(SOURCE)
-	$(JAVAC) $(JAVACFLAGS) $?
+	$(JAVAC) $(JAVACFLAGS) $^
 	$(JAR) $(JARFLAGS) $@ ../common/*.class
 	$(CP) $(JARNAME) $(JARS)
 

@@ -26,4 +26,5 @@ public interface Trace {
     public void preInstruction( DisAsm code, Deque< Integer > stack );
     public void postInstruction( DisAsm code, Deque< Integer > stack );
     public void postProgram( DisAsm code, Deque< Integer > stack );
+    public void io( String data );
 }

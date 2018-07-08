@@ -32,7 +32,7 @@ public class PrintTrace extends EmptyTrace {
 
     public void preInstruction( DisAsm disAsm, Deque<Integer> stack ) {
 
-        out.print( "\t" + disAsm.dumpInstruction( false ) );
+        out.print( "\t\t" + disAsm.dumpInstruction( false ) );
 
         out.print("  [ ");
         for( var i : stack ) {
@@ -41,6 +41,13 @@ public class PrintTrace extends EmptyTrace {
         out.println(" ]");
 
         return;
+    }
+
+    public void io( String data ) {
+        out.println();
+        out.print( data );
+        out.println();
+        out.println();
     }
 
     private PrintStream out;

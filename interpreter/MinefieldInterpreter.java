@@ -94,6 +94,32 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
         return result;
     }
 
+    @Override
+    public InterpValue visitCompGroup( MinefieldParser.CompGroupContext ctx ) {
+        return visit( ctx.compExpr() );
+    }
+
+    @Override
+    public InterpValue visitCompOp( MinefieldParser.CompOpContext ctx ) {
+        var left = visit( ctx.left );
+        var right = visit( ctx.right );
+
+        boolean result = left.getComp().compare( left, ctx.op.getText(), right );
+
+        return new InterpBool( result );
+    }
+
+    @Override
+    public InterpValue visitCompInt( MinefieldParser.CompIntContext ctx ) {
+        return new InterpInt( Integer.parseInt( ctx.INTEGER().getText()
+                                                .replace( "_", "" ) ) );
+    }
+
+    @Override
+    public InterpValue visitCompStr( MinefieldParser.CompStrContext ctx ) {
+        return new InterpString( stripQuotes( ctx.getText() ) );
+    }
+
     private String stripQuotes( String subject ) {
         return subject.substring( 1, subject.length() - 1 );
     }

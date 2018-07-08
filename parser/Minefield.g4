@@ -27,6 +27,7 @@ specialForm : 'print' expr #printExpr
             ;
 
 expr : arithExpr #intArith
+     | compExpr #compareExpr
      | STRING  #immStr
      ;
 
@@ -38,6 +39,12 @@ arithExpr : '(' arithExpr ')'  #arithGroup
           | left=arithExpr op=('+' | '-') right=arithExpr #addi
           | INTEGER #immInt
           ;
+
+compExpr : '(' compExpr ')' #compGroup
+         | left=compExpr op=( '<' | '<=' | '?=' | '!=' | '>=' | '>' ) right=compExpr #compOp
+         | INTEGER #compInt
+         | STRING  #compStr
+         ;
 
 INTEGER : '-'? DIGIT(DIGIT|'_')* ;
 

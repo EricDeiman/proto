@@ -103,7 +103,7 @@ public class DisAsm implements Version {
         }
 
         String operandXStr = hasOperand ? String.format("%08x", operand) : "";
-        buffer.append( String.format( "%04x:  %02x %8s   %-7s %-8s",
+        buffer.append( String.format( "%04x:  %02x %8s   %-7s %-10s",
                                       position,
                                       opCode.ordinal(),
                                       operandXStr,

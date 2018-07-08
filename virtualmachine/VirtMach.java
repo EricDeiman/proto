@@ -157,9 +157,11 @@ public class VirtMach implements Version {
         switch( type ) {
         case iInteger:
             os.print( value );
+            trace.io( value.toString() );
             break;
         case iString:
             os.print( getString( value ) );
+            trace.io( getString( value ) );
             break;
         }
     }

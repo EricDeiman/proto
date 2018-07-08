@@ -18,8 +18,6 @@
 
 */
 
-public interface InterpValue {
-
-    public String toString();
-    public Comp getComp();
+public interface Comp {
+    public boolean compare( InterpValue left, String op, InterpValue right );
 }
