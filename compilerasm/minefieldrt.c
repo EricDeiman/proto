@@ -17,11 +17,19 @@
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <tgmath.h>
 
 #include "minefieldrt.h"
+
+typedef int ( *comparer )( void *, char *, void * );
+
+typedef struct {
+  char *name;
+  comparer fn;
+} entry;
 
 stack *mkStack( int elements ) {
   stack *ptr = ( stack * )malloc( sizeof( stack ) + elements * sizeof( long ) );
@@ -63,6 +71,10 @@ void printTos( stack *s ) {
 
   case iString:
     printf( "%s", ( char * )value );
+    break;
+
+  case iBoolean:
+    printf( "%s", value == 0 ? "false" : "true" );
     break;
   }
 }
@@ -169,4 +181,179 @@ void meflSub( stack *s ) {
 
   push( s, leftValue );
   push( s, leftType );
+}
+
+int meflCompareInt( void *left, char *op, void *right ) {
+  int _left = *( int * )left;
+  int _right = *( int * )right;
+
+  if( strcmp( op, "<" ) == 0 ) {
+    return _left < _right;
+  }
+  else if( strcmp( op, "<=" ) == 0 ) {
+    return _left <= _right;
+  }
+  else if( strcmp( op, "?=" ) == 0 ) {
+    return _left == _right;
+  }
+  else if( strcmp( op, "!=" ) == 0 ) {
+    return _left != _right;
+  }
+  else if( strcmp( op, ">=" ) == 0 ) {
+    return _left >= _right;
+  }
+  else if( strcmp( op, ">" ) == 0 ) {
+    return _left > _right;
+  }
+
+  return 0;
+}
+
+int meflCompareStr( void *left, char *op, void *right ) {
+  char *_left = ( char * )left;
+  char *_right = ( char * )right;
+
+  if( strcmp( op, "<" ) == 0 ) {
+    return strcmp( _left, _right ) < 0;
+  }
+  else if( strcmp( op, "<=" ) == 0 ) {
+    return strcmp( _left, _right ) <= 0;
+  }
+  else if( strcmp( op, "?=" ) == 0 ) {
+    return strcmp( _left, _right ) == 0;
+  }
+  else if( strcmp( op, "!=" ) == 0 ) {
+    return strcmp( _left, _right ) != 0;
+  }
+  else if( strcmp( op, ">=" ) == 0 ) {
+    return strcmp( _left, _right ) >= 0;
+  }
+  else if( strcmp( op, ">" ) == 0 ) {
+    return strcmp( _left, _right ) > 0;
+  }
+
+  return 0;
+}
+
+int meflCompareBool( void *left, char *op, void *right ) {
+  int _left = *( int * )left;
+  int _right = *( int * )right;
+
+  if( strcmp( op, "?=" ) == 0 ) {
+    return _left == _right;
+  }
+  else if( strcmp( op, "!=" ) == 0 ) {
+    return _left != _right;
+  }
+
+  printf( "cannot use %s on booleans", op );
+  exit( -1 );
+}
+
+char *typeName[] = {
+  "no type",
+  "integer",
+  "string",
+  "boolean"
+};
+
+entry ops[] = {
+  {
+    "integer<integer",
+    meflCompareInt
+  },
+  {
+    "integer<=integer",
+    meflCompareInt
+  },
+  {
+    "integer?=integer",
+    meflCompareInt
+  },
+  {
+    "integer!=integer",
+    meflCompareInt
+  },
+  {
+    "integer>=integer",
+    meflCompareInt
+  },
+  {
+    "integer>integer",
+    meflCompareInt
+  },
+  {
+    "string<string",
+    meflCompareStr
+  },
+  {
+    "string<=string",
+    meflCompareStr
+  },
+  {
+    "string?=string",
+    meflCompareStr
+  },
+  {
+    "string!=string",
+    meflCompareStr
+  },
+  {
+    "string>=string",
+    meflCompareStr
+  },
+  {
+    "string>string",
+    meflCompareStr
+  },
+  {
+    "boolean?=boolean",
+    meflCompareBool
+  },
+  {
+    "boolean!=boolean",
+    meflCompareBool
+  }
+};
+
+int opsCount = sizeof( ops ) / sizeof( entry );
+
+void meflCompare( stack *s, char *op ) {
+  long rightType = pop( s );
+  long rightValue = pop( s );
+  long leftType = pop( s );
+  long leftValue = pop( s );
+
+  if( leftType != rightType ) {
+    printf( "cannot apply %s to types %s and %s", op, typeName[ leftType ],
+            typeName[ rightType ] );
+    exit( -1 );
+  }
+
+  comparer fn;
+  char name[ 256 ];
+  sprintf( name, "%s%s%s", typeName[ leftType ], op, typeName[ rightType ] );
+
+  int i;
+  for( i = 0; i < opsCount; i++ ) {
+    if( strcmp( ops[ i ].name, name ) == 0 ) {
+      fn = ops[ i ].fn;
+      break;
+    }
+  }
+
+  if( i == opsCount ) {
+    printf( "cannot find %s\n", name );
+    exit( -1 );
+  }
+
+  if( leftType == 1 || leftType == 3 ) {
+    leftValue = fn( &leftValue, op, &rightValue );    
+  }
+  else {
+    leftValue = fn( ( char * )leftValue, op, ( char * )rightValue );
+  }
+
+  push( s, leftValue );
+  push( s, iBoolean );
 }

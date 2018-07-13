@@ -30,6 +30,7 @@ enum RunTimeTypes {
   iUnknown,
   iInteger,
   iString,
+  iBoolean
 };
 
 stack *mkStack( int );

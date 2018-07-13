@@ -183,6 +183,77 @@ public class Compile extends MinefieldBaseVisitor< Object >
         return null;
     }
 
+    @Override
+    public Object visitCompGroup( MinefieldParser.CompGroupContext ctx ) {
+        return visit( ctx.compExpr() );
+    }
+
+    @Override
+    public Object visitCompOp( MinefieldParser.CompOpContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+
+        switch( ctx.op.getText() ) {
+        case "<":
+            code.writeByte( ByteCodes.Codes.Lt );
+            break;
+        case "<=":
+            code.writeByte( ByteCodes.Codes.Lte );
+            break;
+        case "?=":
+            code.writeByte( ByteCodes.Codes.Eq );
+            break;
+        case "!=":
+            code.writeByte( ByteCodes.Codes.Neq );
+            break;
+        case ">=":
+            code.writeByte( ByteCodes.Codes.Gte );
+            break;
+        case ">":
+            code.writeByte( ByteCodes.Codes.Gt );
+            break;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitCompInt( MinefieldParser.CompIntContext ctx ) {
+        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
+        code.writeByte( ByteCodes.Codes.Push )
+            .writeInteger( value )
+            .writeByte( ByteCodes.Codes.Push )
+            .writeInteger( RunTimeTypes.iInteger.ordinal() );
+        return null;
+    }
+
+    @Override
+    public Object visitCompStr( MinefieldParser.CompStrContext ctx ) {
+        var value = ctx.STRING().getText();
+        value = value.substring( 1, value.length() - 1 ).intern();
+
+        String label = null;
+        if( !constantPool.containsValue( value ) ) {
+            label = labelMaker.make( "string" );
+            constantPool.put( label, value );
+        }
+        else {
+            for( var key : constantPool.keySet() ) {
+                if( constantPool.get( key ) == value ) {
+                    label = key;
+                }
+            }
+        }
+
+        code.writeByte( ByteCodes.Codes.Push );
+        backPatches.addBackPatch( label, code.getPointer() );
+        code.writeInteger( 0 )
+            .writeByte( ByteCodes.Codes.Push )
+            .writeInteger( RunTimeTypes.iString.ordinal() );
+
+        return null;
+    }
+
     public void writeCodeTo(String fileName) {
         code.writeTo(fileName);
     }

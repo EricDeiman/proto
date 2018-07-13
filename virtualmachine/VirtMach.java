@@ -34,7 +34,7 @@ import common.Version;
 
 /**
    Our stack discipline is to push the value first and then push the type of the value.
- */
+*/
 public class VirtMach implements Version {
 
     public VirtMach( InputStream in, PrintStream os, Trace trace ) {
@@ -59,7 +59,7 @@ public class VirtMach implements Version {
         if( build != Version.build ) {
             throw new Error( "cannot run build version " + build + " object files" );
         }
-        
+
         code.setPointer( sizeOfHeader );
     }
 
@@ -109,6 +109,21 @@ public class VirtMach implements Version {
                                   rightType, rightValue ) );
                 stack.push( RunTimeTypes.iInteger.ordinal() );
                 break;
+            case Lt:
+            case Lte:
+            case Eq:
+            case Neq:
+            case Gte:
+            case Gt:
+                rightType = runTimeTypesCache[ stack.pop() ];
+                rightValue = stack.pop();
+                leftType = runTimeTypesCache[ stack.pop() ];
+                leftValue = stack.pop();
+                stack.push( compare( leftType, leftValue,
+                                     op,
+                                     rightType, rightValue ) );
+                stack.push( RunTimeTypes.iBoolean.ordinal() );
+                break;
             default:
                 break;
             }
@@ -118,6 +133,102 @@ public class VirtMach implements Version {
 
         trace.postProgram( disAsm, stack );
         return stack.size();
+    }
+
+    private int compare( RunTimeTypes leftType, int left,
+                         ByteCodes.Codes op,
+                         RunTimeTypes rightType, int right ) {
+        if( leftType != rightType ) {
+            throw new Error( "cannot compare " + leftType + " with " + rightType );
+        }
+
+        int result = 0;
+        switch( leftType ) {
+        case iInteger:
+            result  = compareInteger( left, op, right );
+            break;
+        case iString:
+            result =  compareString( left, op, right );
+            break;
+        case iBoolean:
+            result = compareBoolean( left, op, right );
+            break;
+        }
+
+        return result;
+    }
+
+    private int compareInteger( int left, ByteCodes.Codes op, int right ) {
+        int result = 0;
+
+        switch( op ) {
+        case Lt:
+            result = left < right ? 1 : 0;
+            break;
+        case Lte:
+            result = left <= right ? 1 : 0;
+            break;
+        case Eq:
+            result = left == right ? 1 : 0;
+            break;
+        case Neq:
+            result = left != right ? 1 : 0;
+            break;
+        case Gte:
+            result = left >= right ? 1 : 0;
+            break;
+        case Gt:
+            result = left > right ? 1 : 0;
+            break;
+        }
+
+        return result;
+    }
+
+    private int compareBoolean( int left, ByteCodes.Codes op, int right ) {
+        int result = 0;
+
+        switch( op ) {
+        case Eq:
+            result = left == right ? 1 : 0;
+            break;
+        case Neq:
+            result = left != right ? 1 : 0;
+            break;
+        default:
+            throw new Error( "cannot use " + op + " on booleans");
+        }
+
+        return result;
+    }
+
+    private int compareString( int left, ByteCodes.Codes op, int right ) {
+        String sLeft = getString( left );
+        String sRight = getString( right );
+        int result = 0;
+
+        switch( op ) {
+        case Lt:
+            result = sLeft.compareTo(sRight) < 0 ? 1 : 0;
+            break;
+        case Lte:
+            result = sLeft.compareTo(sRight) <= 0 ? 1 : 0;
+            break;
+        case Eq:
+            result = sLeft.compareTo(sRight) == 0 ? 1 : 0;
+            break;
+        case Neq:
+            result = sLeft.compareTo(sRight) != 0 ? 1 : 0;
+            break;
+        case Gte:
+            result = sLeft.compareTo(sRight) >= 0 ? 1 : 0;
+            break;
+        case Gt:
+            result = sLeft.compareTo(sRight) > 0 ? 1 : 0;
+            break;
+        }
+
+        return result;
     }
 
     private int math( RunTimeTypes leftType, int left,
@@ -162,6 +273,20 @@ public class VirtMach implements Version {
         case iString:
             os.print( getString( value ) );
             trace.io( getString( value ) );
+            break;
+        case iBoolean: {
+            String result;
+            if( value != 0 ) {
+                result = "true";
+            }
+            else {
+                result = "false";
+            }
+
+            os.print( result );
+            trace.io( result );
+
+        }
             break;
         }
     }

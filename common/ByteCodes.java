@@ -32,11 +32,23 @@ public class ByteCodes {
         Rem,     // 0x08
         Add,     // 0x09
         Sub,     // 0x0a
+        Lt,      // 0x0b
+        Lte,     // 0x0e
+        Eq,      // 0x0f
+        Neq,     // 0x10
+        Gte,     // 0x11
+        Gt,      // 0x12
     }
 
     public static final boolean HasOperand[] = {
         false,
         true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false,

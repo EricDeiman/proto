@@ -44,6 +44,13 @@ public class Compile extends MinefieldBaseVisitor< Object >
         percentD = labelMaker.make();
         constantPool.put( percentD, "%d".intern() );
 
+        constantPool.put( labelMaker.make(), "<".intern() );
+        constantPool.put( labelMaker.make(), "<=".intern() );
+        constantPool.put( labelMaker.make(), "?=".intern() );
+        constantPool.put( labelMaker.make(), "!=".intern() );
+        constantPool.put( labelMaker.make(), ">=".intern() );
+        constantPool.put( labelMaker.make(), ">".intern() );
+
         howManyRuntimeStacks = 1;
     }
 
@@ -180,6 +187,50 @@ public class Compile extends MinefieldBaseVisitor< Object >
             code.append( "\tcall meflSub@PLT\n" );
             break;
         }
+
+        return null;
+    }
+
+    @Override
+    public Object visitCompGroup( MinefieldParser.CompGroupContext ctx ) {
+        return visit( ctx.compExpr() );
+    }
+
+    @Override
+    public Object visitCompOp( MinefieldParser.CompOpContext ctx ) {
+        visit( ctx.left );
+        visit( ctx.right );
+        code.append( "\tmovq -8(%rbp), %rdi\n" )
+            .append( "\tleaq " + constantLookUp( ctx.op.getText() )  + "(%rip), %rsi\n" )
+            .append( "\tcall meflCompare@PLT\n\n" );
+
+        return null;
+    }
+
+    @Override
+    public Object visitCompInt( MinefieldParser.CompIntContext ctx ) {
+        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
+        code.append( "\tmovq -8(%rbp), %rdi\n" )
+            .append( "\tmovq $" + value + ", %rsi\n" ) // push the value
+            .append( "\tcall push@PLT\n" )
+            .append( "\tmovq $" + RunTimeTypes.iInteger.ordinal() + ", %rsi\n" )  // push the type
+            .append( "\tcall push@PLT\n\n" );
+
+        return null;
+    }
+
+    @Override
+    public Object visitCompStr( MinefieldParser.CompStrContext ctx ) {
+        var value = ctx.STRING().getText();
+        value = value.substring( 1, value.length() - 1 ).intern();
+
+        var label = constantLookUp( value );
+
+        code.append( "\tmovq -8(%rbp), %rdi\n" )
+            .append( "\tleaq " + label + "(%rip), %rsi\n" )
+            .append( "\tcall push@PLT\n" )
+            .append( "\tmovq $" + RunTimeTypes.iString.ordinal() + ", %rsi\n" )  // push the type
+            .append( "\tcall push@PLT\n\n" );
 
         return null;
     }
