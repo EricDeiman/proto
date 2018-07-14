@@ -88,51 +88,17 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
     @Override
     public Object visitImmInt( MinefieldParser.ImmIntContext ctx ) {
-        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
-        code.writeByte( ByteCodes.Codes.Push )
-            .writeInteger( value )
-            .writeByte( ByteCodes.Codes.Push )
-            .writeInteger( RunTimeTypes.iInteger.ordinal() );
-        return null;
+        return visitInteger( ctx.INTEGER().getText() );
     }
 
     @Override
     public Object visitImmStr( MinefieldParser.ImmStrContext ctx ) {
-        var value = ctx.STRING().getText();
-        value = value.substring( 1, value.length() - 1 ).intern();
-
-        String label = null;
-        if( !constantPool.containsValue( value ) ) {
-            label = labelMaker.make( "string" );
-            constantPool.put( label, value );
-        }
-        else {
-            for( var key : constantPool.keySet() ) {
-                if( constantPool.get( key ) == value ) {
-                    label = key;
-                }
-            }
-        }
-
-        code.writeByte( ByteCodes.Codes.Push );
-        backPatches.addBackPatch( label, code.getPointer() );
-        code.writeInteger( 0 )
-            .writeByte( ByteCodes.Codes.Push )
-            .writeInteger( RunTimeTypes.iString.ordinal() );
-
-        return null;
+        return visitString( ctx.STRING().getText() );
     }
 
     @Override
     public Object visitPrintLn(MinefieldParser.PrintLnContext ctx) {
         code.writeByte( ByteCodes.Codes.PrintLn );
-
-        return null;
-    }
-
-    @Override
-    public Object visitArithGroup( MinefieldParser.ArithGroupContext ctx ) {
-        visit( ctx.arithExpr() );
 
         return null;
     }
@@ -184,11 +150,6 @@ public class Compile extends MinefieldBaseVisitor< Object >
     }
 
     @Override
-    public Object visitCompGroup( MinefieldParser.CompGroupContext ctx ) {
-        return visit( ctx.compExpr() );
-    }
-
-    @Override
     public Object visitCompOp( MinefieldParser.CompOpContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
@@ -219,31 +180,30 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
     @Override
     public Object visitCompInt( MinefieldParser.CompIntContext ctx ) {
-        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
-        code.writeByte( ByteCodes.Codes.Push )
-            .writeInteger( value )
-            .writeByte( ByteCodes.Codes.Push )
-            .writeInteger( RunTimeTypes.iInteger.ordinal() );
-        return null;
+        return visitInteger( ctx.INTEGER().getText() );
     }
 
     @Override
     public Object visitCompStr( MinefieldParser.CompStrContext ctx ) {
-        var value = ctx.STRING().getText();
-        value = value.substring( 1, value.length() - 1 ).intern();
+        return visitString( ctx.STRING().getText() );
+    }
 
-        String label = null;
-        if( !constantPool.containsValue( value ) ) {
-            label = labelMaker.make( "string" );
-            constantPool.put( label, value );
-        }
-        else {
-            for( var key : constantPool.keySet() ) {
-                if( constantPool.get( key ) == value ) {
-                    label = key;
-                }
-            }
-        }
+    public void writeCodeTo(String fileName) {
+        code.writeTo(fileName);
+    }
+
+    private Object visitInteger( String integer ) {
+        var value = Integer.parseInt( integer.replace( "_", "" ) );
+        code.writeByte( ByteCodes.Codes.Push )
+            .writeInteger( value )
+            .writeByte( ByteCodes.Codes.Push )
+            .writeInteger( RunTimeTypes.iInteger.ordinal() );
+
+        return null;
+    }
+
+    private Object visitString( String string ) {
+        var label = stringLiteral( string );
 
         code.writeByte( ByteCodes.Codes.Push );
         backPatches.addBackPatch( label, code.getPointer() );
@@ -254,8 +214,23 @@ public class Compile extends MinefieldBaseVisitor< Object >
         return null;
     }
 
-    public void writeCodeTo(String fileName) {
-        code.writeTo(fileName);
+    private String stringLiteral( String literal ) {
+        literal = literal.substring( 1, literal.length() - 1 ).intern();
+        String label = null;
+
+        if( !constantPool.containsValue( literal ) ) {
+            label = labelMaker.make( "string" );
+            constantPool.put( label, literal );
+        }
+        else {
+            for( var key : constantPool.keySet() ) {
+                if( constantPool.get( key ) == literal ) {
+                    label = key;
+                }
+            }
+        }
+
+        return label;
     }
 
     private VMImageBuffer code;

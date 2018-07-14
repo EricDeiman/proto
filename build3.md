@@ -1,4 +1,0 @@
-# Comparison operators
-<, <=, >, >=, ?=, !=
-boolean type
-&&, ||

@@ -20,7 +20,7 @@
 package common;
 
 public interface Version {
-    final int build = 3;
+    final int build = 4;
     final String name = "minefield";
     final int sizeOfHeader = 17; // bytes
 }

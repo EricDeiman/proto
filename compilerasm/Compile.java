@@ -65,7 +65,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
             .append( "\tsubq $" + (8 + howManyRuntimeStacks * 8) + ", %rsp\n")
             .append( "\tmovl	$1024, %edi\n" )
             .append( "\tcall	mkStack@PLT\n")
-            .append( "\tmovq	%rax, -8(%rbp)\n\n" );
+            .append( "\tmovq	%rax, " + valueStack + "\n\n" );
 
         for( var ectx : ctx.specialForm() ) {
             visit( ectx );
@@ -94,7 +94,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
     @Override
     public Object visitPrintExpr( MinefieldParser.PrintExprContext ctx ) {
         visit( ctx.expr() );
-        code.append( "\tmovq -8(%rbp), %rdi\n" )
+        code.append( "\tmovq " + valueStack + ", %rdi\n" )
             .append( "\tcall printTos@PLT\n\n" );
 
         return null;
@@ -102,30 +102,12 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
     @Override
     public Object visitImmInt( MinefieldParser.ImmIntContext ctx ) {
-        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
-        code.append( "\tmovq -8(%rbp), %rdi\n" )
-            .append( "\tmovq $" + value + ", %rsi\n" ) // push the value
-            .append( "\tcall push@PLT\n" )
-            .append( "\tmovq $" + RunTimeTypes.iInteger.ordinal() + ", %rsi\n" )  // push the type
-            .append( "\tcall push@PLT\n\n" );
-
-        return null;
+        return visitInteger( ctx.INTEGER().getText() );
     }
 
     @Override
     public Object visitImmStr( MinefieldParser.ImmStrContext ctx ) {
-        var value = ctx.STRING().getText();
-        value = value.substring( 1, value.length() - 1 ).intern();
-
-        var label = constantLookUp( value );
-
-        code.append( "\tmovq -8(%rbp), %rdi\n" )
-            .append( "\tleaq " + label + "(%rip), %rsi\n" )
-            .append( "\tcall push@PLT\n" )
-            .append( "\tmovq $" + RunTimeTypes.iString.ordinal() + ", %rsi\n" )  // push the type
-            .append( "\tcall push@PLT\n\n" );
-
-        return null;
+        return visitString( ctx.STRING().getText() );
     }
 
     @Override
@@ -137,16 +119,10 @@ public class Compile extends MinefieldBaseVisitor< Object >
     }
 
     @Override
-    public Object visitArithGroup( MinefieldParser.ArithGroupContext ctx ) {
-        visit( ctx.arithExpr() );
-        return null;
-    }
-
-    @Override
     public Object visitPower( MinefieldParser.PowerContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
-        code.append( "\tmovq -8(%rbp), %rdi\n" )
+        code.append( "\tmovq " + valueStack + ", %rdi\n" )
             .append( "\tcall meflPow@PLT\n" );
 
         return null;
@@ -156,7 +132,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
     public Object visitMulti( MinefieldParser.MultiContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
-        code.append( "\tmovq -8(%rbp), %rdi\n" );
+        code.append( "\tmovq " + valueStack + ", %rdi\n" );
 
         switch( ctx.op.getText() ) {
         case "*":
@@ -177,7 +153,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
     public Object visitAddi( MinefieldParser.AddiContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
-        code.append( "\tmovq -8(%rbp), %rdi\n" );
+        code.append( "\tmovq " + valueStack + ", %rdi\n" );
 
         switch( ctx.op.getText() ) {
         case "+":
@@ -192,15 +168,11 @@ public class Compile extends MinefieldBaseVisitor< Object >
     }
 
     @Override
-    public Object visitCompGroup( MinefieldParser.CompGroupContext ctx ) {
-        return visit( ctx.compExpr() );
-    }
-
-    @Override
     public Object visitCompOp( MinefieldParser.CompOpContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
-        code.append( "\tmovq -8(%rbp), %rdi\n" )
+
+        code.append( "\tmovq " + valueStack + ", %rdi\n" )
             .append( "\tleaq " + constantLookUp( ctx.op.getText() )  + "(%rip), %rsi\n" )
             .append( "\tcall meflCompare@PLT\n\n" );
 
@@ -209,30 +181,12 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
     @Override
     public Object visitCompInt( MinefieldParser.CompIntContext ctx ) {
-        var value = Integer.parseInt( ctx.INTEGER().getText().replace( "_", "" ) );
-        code.append( "\tmovq -8(%rbp), %rdi\n" )
-            .append( "\tmovq $" + value + ", %rsi\n" ) // push the value
-            .append( "\tcall push@PLT\n" )
-            .append( "\tmovq $" + RunTimeTypes.iInteger.ordinal() + ", %rsi\n" )  // push the type
-            .append( "\tcall push@PLT\n\n" );
-
-        return null;
+        return visitInteger( ctx.INTEGER().getText() );
     }
 
     @Override
     public Object visitCompStr( MinefieldParser.CompStrContext ctx ) {
-        var value = ctx.STRING().getText();
-        value = value.substring( 1, value.length() - 1 ).intern();
-
-        var label = constantLookUp( value );
-
-        code.append( "\tmovq -8(%rbp), %rdi\n" )
-            .append( "\tleaq " + label + "(%rip), %rsi\n" )
-            .append( "\tcall push@PLT\n" )
-            .append( "\tmovq $" + RunTimeTypes.iString.ordinal() + ", %rsi\n" )  // push the type
-            .append( "\tcall push@PLT\n\n" );
-
-        return null;
+        return visitString( ctx.STRING().getText() );
     }
 
     public void writeCodeTo(String fileName) {
@@ -245,6 +199,33 @@ public class Compile extends MinefieldBaseVisitor< Object >
         catch(Exception e) {
             throw new Error(e);
         }
+    }
+
+    private Object visitInteger( String integer ) {
+        var value = Integer.parseInt( integer.replace( "_", "" ) );
+        code.append( "\tmovq " + valueStack + ", %rdi\n" )
+            // push the value
+            .append( "\tmovq $" + value + ", %rsi\n" )
+            .append( "\tcall push@PLT\n" )
+            // push the type
+            .append( "\tmovq $" + RunTimeTypes.iInteger.ordinal() + ", %rsi\n" )
+            .append( "\tcall push@PLT\n\n" );
+
+        return null;
+    }
+
+    private Object visitString( String string ) {
+        var value = string.substring( 1, string.length() - 1 ).intern();
+        var label = constantLookUp( value );
+
+        code.append( "\tmovq " + valueStack + ", %rdi\n" )
+            .append( "\tleaq " + label + "(%rip), %rsi\n" )
+            .append( "\tcall push@PLT\n" )
+            // push the type
+            .append( "\tmovq $" + RunTimeTypes.iString.ordinal() + ", %rsi\n" )
+            .append( "\tcall push@PLT\n\n" );
+
+        return null;
     }
 
     private String constantLookUp( String value ) {
@@ -271,4 +252,5 @@ public class Compile extends MinefieldBaseVisitor< Object >
     private Labeller labelMaker;
     private String percentD;
     private int howManyRuntimeStacks;
+    private String valueStack = "-8(%rbp)";
 }
