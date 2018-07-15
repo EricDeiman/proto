@@ -124,6 +124,32 @@ public class VirtMach implements Version {
                                      rightType, rightValue ) );
                 stack.push( RunTimeTypes.iBoolean.ordinal() );
                 break;
+            case JmpT:
+                leftType = runTimeTypesCache[ stack.pop() ];
+                leftValue = stack.pop();
+                var destination = code.readInteger();
+                if( leftType != RunTimeTypes.iBoolean ) {
+                    throw new Error( "attempt to use " + leftType + " as a boolean" );
+                }
+                if( leftValue != 0 ) {
+                    code.setPointer( destination );
+                }
+                break;
+            case JmpF:
+                leftType = runTimeTypesCache[ stack.pop() ];
+                leftValue = stack.pop();
+                destination = code.readInteger();
+                if( leftType != RunTimeTypes.iBoolean ) {
+                    throw new Error( "attempt to use " + leftType + " as a boolean" );
+                }
+                if( leftValue == 0 ) {
+                    code.setPointer( destination );
+                }
+                break;
+            case Jmp:
+                destination = code.readInteger();
+                code.setPointer( destination );
+                break;
             default:
                 break;
             }

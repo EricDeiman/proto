@@ -1,0 +1,11 @@
+print if 1 ?= 1 then "1 does equal 1" else "1 does not equal 1" println
+print if "one" ?= "two"
+      then "one equals two"
+      else "one does not equal two"
+println
+print if 1 ?= 2
+      then "case 1"
+      else if 2 ?= 3
+           then "case 2"
+           else "case 3"
+println

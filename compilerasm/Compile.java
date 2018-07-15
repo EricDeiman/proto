@@ -36,6 +36,7 @@ import parser.MinefieldParser;
 
 public class Compile extends MinefieldBaseVisitor< Object >
                      implements Version {
+
     public Compile() {
         code = new StringBuffer();
         constantPool = new HashMap<String, String>();
@@ -63,9 +64,9 @@ public class Compile extends MinefieldBaseVisitor< Object >
         code.append( "\tpushq %rbp\n" )
             .append( "\tmovq %rsp, %rbp\n" )
             .append( "\tsubq $" + (8 + howManyRuntimeStacks * 8) + ", %rsp\n")
-            .append( "\tmovl	$1024, %edi\n" )
-            .append( "\tcall	mkStack@PLT\n")
-            .append( "\tmovq	%rax, " + valueStack + "\n\n" );
+            .append( "\tmovl $1024, %edi\n" )
+            .append( "\tcall mkStack@PLT\n")
+            .append( "\tmovq %rax, " + valueStack + "\n\n" );
 
         for( var ectx : ctx.specialForm() ) {
             visit( ectx );
@@ -94,6 +95,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
     @Override
     public Object visitPrintExpr( MinefieldParser.PrintExprContext ctx ) {
         visit( ctx.expr() );
+
         code.append( "\tmovq " + valueStack + ", %rdi\n" )
             .append( "\tcall printTos@PLT\n\n" );
 
@@ -112,8 +114,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
     @Override
     public Object visitPrintLn( MinefieldParser.PrintLnContext ctx ) {
-        code.append( "\tmovq $0, %rax\n" )
-            .append( "\tmovl $10, %edi\n" )
+        code.append( "\tmovl $10, %edi\n" )
             .append( "\tcall putchar@PLT\n\n" );
         return null;
     }
@@ -122,8 +123,9 @@ public class Compile extends MinefieldBaseVisitor< Object >
     public Object visitPower( MinefieldParser.PowerContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
+
         code.append( "\tmovq " + valueStack + ", %rdi\n" )
-            .append( "\tcall meflPow@PLT\n" );
+            .append( "\tcall meflPow@PLT\n\n" );
 
         return null;
     }
@@ -132,17 +134,18 @@ public class Compile extends MinefieldBaseVisitor< Object >
     public Object visitMulti( MinefieldParser.MultiContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
+
         code.append( "\tmovq " + valueStack + ", %rdi\n" );
 
         switch( ctx.op.getText() ) {
         case "*":
-            code.append( "\tcall meflMul@PLT\n" );
+            code.append( "\tcall meflMul@PLT\n\n" );
             break;
         case "/":
-            code.append( "\tcall meflDiv@PLT\n" );
+            code.append( "\tcall meflDiv@PLT\n\n" );
             break;
         case "%":
-            code.append( "\tcall meflRem@PLT\n" );
+            code.append( "\tcall meflRem@PLT\n\n" );
             break;
         }
 
@@ -153,14 +156,15 @@ public class Compile extends MinefieldBaseVisitor< Object >
     public Object visitAddi( MinefieldParser.AddiContext ctx ) {
         visit( ctx.left );
         visit( ctx.right );
+
         code.append( "\tmovq " + valueStack + ", %rdi\n" );
 
         switch( ctx.op.getText() ) {
         case "+":
-            code.append( "\tcall meflAdd@PLT\n" );
+            code.append( "\tcall meflAdd@PLT\n\n" );
             break;
         case "-":
-            code.append( "\tcall meflSub@PLT\n" );
+            code.append( "\tcall meflSub@PLT\n\n" );
             break;
         }
 
@@ -203,6 +207,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
     private Object visitInteger( String integer ) {
         var value = Integer.parseInt( integer.replace( "_", "" ) );
+
         code.append( "\tmovq " + valueStack + ", %rdi\n" )
             // push the value
             .append( "\tmovq $" + value + ", %rsi\n" )

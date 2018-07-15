@@ -98,7 +98,7 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
     public InterpValue visitCompGroup( MinefieldParser.CompGroupContext ctx ) {
         return visit( ctx.compExpr() );
     }
-
+    
     @Override
     public InterpValue visitCompOp( MinefieldParser.CompOpContext ctx ) {
         var left = visit( ctx.left );
@@ -118,6 +118,19 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
     @Override
     public InterpValue visitCompStr( MinefieldParser.CompStrContext ctx ) {
         return new InterpString( stripQuotes( ctx.getText() ) );
+    }
+
+    @Override
+    public InterpValue visitIfExpr( MinefieldParser.IfExprContext ctx ) {
+        var test = ( InterpBool )visit( ctx.compExpr() );
+        var exprs = ctx.expr();
+
+        if( test.get() == true ) {
+            return visit( exprs.get( 0 ) );
+        }
+        else {
+            return visit( exprs.get( 1 ) );
+        }
     }
 
     private String stripQuotes( String subject ) {

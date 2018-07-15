@@ -28,6 +28,7 @@ specialForm : 'print' expr #printExpr
 
 expr : arithExpr #intArith
      | compExpr #compareExpr
+     | 'if' compExpr 'then' expr 'else' expr #ifExpr
      | STRING  #immStr
      ;
 

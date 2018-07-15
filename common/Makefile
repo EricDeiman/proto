@@ -22,26 +22,28 @@ JAVACFLAGS:=-cp $(CLASSPATH)$(DEPENDJARS) -Xlint
 JAR=jar
 JARFLAGS=cf
 CP:=cp
+TOOLS:=../tools/
+PROCESSBYTECODES:=$(TOOLS)processByteCodes.pl
 
 PROJECTNAME:=$(shell basename `pwd`)
-SOURCE:=$(wildcard *.java)
-# CLASSES:=$(SOURCE:.java=.class)
+SOURCE=$(wildcard *.java)
 JARNAME:=$(PROJECTNAME).jar
-
-# %.class:%.java
-# 	$(JAVAC) $(JAVACFLAGS) $^
 
 .DEFAULT : $(JARNAME)
 
-$(JARNAME) : $(SOURCE)
-	$(JAVAC) $(JAVACFLAGS) $^
+$(JARNAME) : $(SOURCE) ByteCodes.java
+	$(JAVAC) $(JAVACFLAGS) *.java
 	$(JAR) $(JARFLAGS) $@ ../common/*.class
 	$(CP) $(JARNAME) $(JARS)
+
+ByteCodes.java : ByteCodes.data ByteCodes.java.template
+	$(PROCESSBYTECODES) ByteCodes.data ByteCodes.java.template
 
 .PHONY : clean scrub
 
 clean :
 	rm -f *.class
+	rm -f ByteCodes.java
 
 scrub : clean
 	rm -f $(JARNAME)

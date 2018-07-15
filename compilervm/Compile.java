@@ -188,9 +188,40 @@ public class Compile extends MinefieldBaseVisitor< Object >
         return visitString( ctx.STRING().getText() );
     }
 
+    @Override
+    public Object visitIfExpr( MinefieldParser.IfExprContext ctx ) {
+        visit( ctx.compExpr() );
+
+        var branches = ctx.expr();
+
+        var elseBranch = labelMaker.make( "elseBranch" );
+        var endIf = labelMaker.make( "endIf" );
+
+        code.writeByte( ByteCodes.Codes.JmpF );
+        backPatches.addBackPatch( elseBranch, code.getPointer() );
+        code.writeInteger( 0 );
+
+        visit( branches.get( 0 ) );
+        code.writeByte( ByteCodes.Codes.Jmp );
+        backPatches.addBackPatch( endIf, code.getPointer() );
+        code.writeInteger( 0 );
+
+        where.put( elseBranch, code.getPointer() );
+
+        if( branches.size() == 2 ) {
+            visit( branches.get( 1 ) );
+        }
+
+        where.put( endIf, code.getPointer() );
+
+        return null;
+    }
+
     public void writeCodeTo(String fileName) {
         code.writeTo(fileName);
     }
+
+    // --------------------------------------------------------------------------------
 
     private Object visitInteger( String integer ) {
         var value = Integer.parseInt( integer.replace( "_", "" ) );
