@@ -205,17 +205,16 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
         // Check to see if top of stack is a boolean type
         code.append( "\tmovq " + valueStack + ", %rax\n" )
-            .append( "\tmovl 4(%rax), %eax\n" )
-            .append( "\tleal -1(%rax), %edx\n")
+            .append( "\tmovl 4(%rax), %edx\n" )
+            .append( "\tleal -1(%rdx), %edx\n")
             .append( "\tmovslq %edx, %rdx\n" )
-            .append( "\tmovq " + valueStack + ", %rax\n" )
             .append( "\tmovq 8(%rax,%rdx,8), %rax\n" )
             .append( "\tcmpq $3, %rax\n" )
             .append( "\tjne " + notBoolean + "\n" )
             // Check to see if top of stack value is true
             .append( "\tmovq " + valueStack + ", %rax\n" )
-            .append( "\tmovl 4(%rax), %eax\n" )
-            .append( "\tleal -2(%rax), %edx\n")
+            .append( "\tmovl 4(%rax), %edx\n" )
+            .append( "\tleal -2(%rdx), %edx\n")
             .append( "\tmovslq %edx, %rdx\n" )
             .append( "\tmovq " + valueStack + ", %rax\n" )
             .append( "\tmovq 8(%rax,%rdx,8), %rax\n" )
@@ -238,7 +237,9 @@ public class Compile extends MinefieldBaseVisitor< Object >
         visit( ctx.expr( 1 ) );
 
         code.append( endTest + ":\n" )
+            .append( "\tjmp " + endBooleanIf + "\n" )
             .append( notBoolean + ":\n" )
+            .append( "\tcall notBoolean@PLT\n" )
             .append( endBooleanIf + ":\n\n" );
 
 

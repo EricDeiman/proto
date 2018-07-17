@@ -357,3 +357,8 @@ void meflCompare( stack *s, char *op ) {
   push( s, leftValue );
   push( s, iBoolean );
 }
+
+void notBoolean() {
+  printf( "error: expected a boolean on top of the stack, but there wasn't one" );
+  exit( -1 );
+}

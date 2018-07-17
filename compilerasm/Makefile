@@ -21,19 +21,16 @@ JAVACFLAGS:=-cp $(CLASSPATH)../jars/Minefield.jar:../jars/common.jar -Xlint
 JAR=jar
 JARFLAGS=cfm
 CP:= cp
+CFLAGS:=-g
 
 PROJECTNAME:=$(shell basename `pwd`)
 SOURCE:=$(wildcard *.java)
-#CLASSES:=$(SOURCE:.java=.class)
 JARNAME:=$(PROJECTNAME).jar
-
-# %.class:%.java
-# 	$(JAVAC) $(JAVACFLAGS) $?
 
 .DEFAULT : $(JARNAME)
 
-$(JARNAME) : $(SOURCE)
-	$(JAVAC) $(JAVACFLAGS) $?
+$(JARNAME) : $(SOURCE) minefieldrt.o
+	$(JAVAC) $(JAVACFLAGS) *.java
 	$(JAR) $(JARFLAGS) $@ Manifest.txt *.class
 	$(CP) $(JARNAME) $(JARS)
 
