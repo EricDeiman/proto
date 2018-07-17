@@ -224,7 +224,6 @@ public class Compile extends MinefieldBaseVisitor< Object >
             .append( "\tcall pop@PLT\n" )
             .append( "\tcall pop@PLT\n" );
 
-
         visit( ctx.expr( 0 ) );
 
         code.append( "\tjmp " + endTest + "\n" )
@@ -233,7 +232,6 @@ public class Compile extends MinefieldBaseVisitor< Object >
             .append( "\tcall pop@PLT\n" )
             .append( "\tcall pop@PLT\n" );
 
-
         visit( ctx.expr( 1 ) );
 
         code.append( endTest + ":\n" )
@@ -241,7 +239,6 @@ public class Compile extends MinefieldBaseVisitor< Object >
             .append( notBoolean + ":\n" )
             .append( "\tcall notBoolean@PLT\n" )
             .append( endBooleanIf + ":\n\n" );
-
 
         return null;
     }
