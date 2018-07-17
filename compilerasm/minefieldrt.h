@@ -46,4 +46,6 @@ void meflRem( stack * );
 void meflAdd( stack * );
 void meflSub( stack * );
 
+void meflCompare( stack *, char * );
+
 #endif

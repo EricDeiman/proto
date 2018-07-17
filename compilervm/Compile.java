@@ -208,9 +208,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
 
         where.put( elseBranch, code.getPointer() );
 
-        if( branches.size() == 2 ) {
-            visit( branches.get( 1 ) );
-        }
+        visit( branches.get( 1 ) );
 
         where.put( endIf, code.getPointer() );
 
