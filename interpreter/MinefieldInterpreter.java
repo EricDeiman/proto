@@ -31,7 +31,7 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
     @Override
     public InterpValue visitProg( MinefieldParser.ProgContext ctx ) {
 
-        for( var ectx : ctx.specialForm() ) {
+        for( var ectx : ctx.expr() ) {
             visit( ectx );
         }
         return null;
@@ -133,8 +133,55 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
         }
     }
 
+    @Override
+    public InterpValue visitLetExp( MinefieldParser.LetExpContext ctx ) {
+        tables.push();
+        var st = tables.peek();
+        int idCount = ctx.ID().size();
+
+        for( int i = 0; i < idCount; i++ ) {
+            var name = ctx.ID( i ).getText();
+            var value = visit( ctx.expr( i ) );
+            st.add( name, value );
+        }
+
+        InterpValue rtn = null;
+        for( int j = idCount; j < ctx.expr().size(); j++ ) {
+            rtn = visit( ctx.expr( j ) );
+        }
+        tables.pop();
+        return rtn;
+    }
+
+    @Override
+    public InterpValue visitIdExpr( MinefieldParser.IdExprContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
+    @Override
+    public InterpValue visitArithId( MinefieldParser.ArithIdContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
+    @Override
+    public InterpValue visitCompId( MinefieldParser.CompIdContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
+    private InterpValue visitId( String id ) {
+        if( tables.containsKey( id ) ) {
+            return tables.lookUp( id );
+        }
+        throw new Error( "cannot find symbol " + id );        
+    }
+
     private String stripQuotes( String subject ) {
         return subject.substring( 1, subject.length() - 1 );
     }
+
+    private SymbolTableStack tables = new SymbolTableStack();
 }
 

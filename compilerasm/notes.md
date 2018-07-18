@@ -1,21 +1,22 @@
 # How gcc compiles an if check
 For this code:
-```
-  stack *s = mkStack( 1024 );
-  // ...
-  push( s, 3 );
-  push( s, iInteger );
-  push( s, 2 );
-  push( s, iInteger );
-
-  meflCompare( s, "<" );
-
-  if( s->memory[ s->top ] == iBoolean ) {
+```c
+stack *s = mkStack( 1024 );
+    // ...
+    push( s, 3 );
+    push( s, iInteger );
+    push( s, 2 );
+    push( s, iInteger );
+    
+    meflCompare( s, "<" );
+    
+    if( s->memory[ s->top ] == iBoolean ) {
+    // ...
 ```
 
 The if statement compiles to this:
-```
-	movq	-8(%rbp), %rax
+```asm
+    movq	-8(%rbp), %rax
 	movl	4(%rax), %eax
 	leal	-1(%rax), %edx
 	movq	-8(%rbp), %rax
@@ -26,24 +27,24 @@ The if statement compiles to this:
 ```
 
 An interesting macro in the C stddef.h file: `offsetof`.  The following code:
-```
-  printf( "offset of size is %d\n", ( int )offsetof( stack, size ) );
-  printf( "offset of top is %d\n", ( int )offsetof( stack, top ) );
-  printf( "offset of memory is %d\n", ( int )offsetof( stack, memory ) );
+```c
+    printf( "offset of size is %d\n", ( int )offsetof( stack, size ) );
+    printf( "offset of top is %d\n", ( int )offsetof( stack, top ) );
+    printf( "offset of memory is %d\n", ( int )offsetof( stack, memory ) );
 ```
 
 Generates this output:
 ```
-offset of size is 0
-offset of top is 4
-offset of memory is 8
+    offset of size is 0
+    offset of top is 4
+    offset of memory is 8
 ```
 
 Memory is an array of `long`s, which are  8 bytes each
 
 So, the previous assembler code, annotated:
-```
-	movq	-8(%rbp), %rax        ; -8(%rbp) is where the stack pointer s is stored
+```asm
+    movq	-8(%rbp), %rax        ; -8(%rbp) is where the stack pointer s is stored
 	movl	4(%rax), %eax         ; %rax + 4 is where the 'top' field is stored.
                                   ; So, %edx is the value of the top field.
 	leal	-1(%rax), %edx        ; Subtract 1 from 'top' value
@@ -62,11 +63,10 @@ So, the previous assembler code, annotated:
 ```
 
 Now for the challenging part.  The following if statement:
-```
+```c
     if( s->memory[ s->top - 1 ] != 0 ) {
 ```
-Compiles to this:
-```
+```asm
 	movq	-8(%rbp), %rax
 	movl	4(%rax), %eax
 	leal	-2(%rax), %edx
@@ -78,7 +78,7 @@ Compiles to this:
 ```
 
 Annotated:
-```
+```asm
 	movq	-8(%rbp), %rax         ; move the pointer to stack into %rax
 	movl	4(%rax), %eax          ; move the top field into %eax (note the clobber)
 	leal	-2(%rax), %edx         ; use lea instr to do quick math on contents of %rax

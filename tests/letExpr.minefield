@@ -1,0 +1,14 @@
+let one = 2 - 1
+let two = one + one
+in
+  let three = one + two
+  let four = two * two
+  in
+    print "one is "   print one println
+    print "two is "   print two println
+    print "three is " print three println
+    print "four is "  print four println
+  end
+  print "one is still " print one println
+  print "two is still " print two println
+end

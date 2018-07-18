@@ -20,16 +20,16 @@ programming language. If not, see <https://www.gnu.org/licenses/>
 
 grammar Minefield;
 
-prog : specialForm+ EOF ;
-
-specialForm : 'print' expr #printExpr
-            | 'println' #printLn
-            ;
+prog : expr+ EOF ;
 
 expr : arithExpr #intArith
      | compExpr #compareExpr
      | 'if' compExpr 'then' expr 'else' expr #ifExpr
+     | ( 'let' ID '=' expr )+ 'in' expr+ 'end' #letExp
      | STRING  #immStr
+     | ID #idExpr
+     | 'print' expr #printExpr
+     | 'println' #printLn
      ;
 
 arithExpr : '(' arithExpr ')'  #arithGroup
@@ -39,12 +39,14 @@ arithExpr : '(' arithExpr ')'  #arithGroup
             // The additive operators
           | left=arithExpr op=('+' | '-') right=arithExpr #addi
           | INTEGER #immInt
+          | ID #arithId
           ;
 
 compExpr : '(' compExpr ')' #compGroup
          | left=compExpr op=( '<' | '<=' | '?=' | '!=' | '>=' | '>' ) right=compExpr #compOp
          | INTEGER #compInt
          | STRING  #compStr
+         | ID #compId
          ;
 
 INTEGER : '-'? DIGIT(DIGIT|'_')* ;
@@ -52,6 +54,10 @@ INTEGER : '-'? DIGIT(DIGIT|'_')* ;
 STRING : '"' (ESC|.)*? '"' ;
 
 DIGIT : [0-9] ;
+
+CHAR : [a-z]|[A-Z] ;
+SYMBOL : '!' | '@' | '#' | '%' | '^' | '&' | '*' | '-' | '_' | '=' | '+' | ':' | '/' ;
+ID : (CHAR | DIGIT | SYMBOL)+ ;
 
 fragment
 ESC : '\\"' | '\\\\' ; // The 2 character escape symbols \" and \\
