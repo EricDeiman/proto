@@ -1,6 +1,7 @@
-let one = 2 - 1
 let two = one + one
+let one = 2 - 1
 in
+  let seven = four + two + one
   let three = one + two
   let four = two * two
   in
@@ -8,6 +9,7 @@ in
     print "two is "   print two println
     print "three is " print three println
     print "four is "  print four println
+    print "seven is " print seven println
   end
   print "one is still " print one println
   print "two is still " print two println
