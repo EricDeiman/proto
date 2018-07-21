@@ -17,6 +17,8 @@
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
 */
 
+package common;
+
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 

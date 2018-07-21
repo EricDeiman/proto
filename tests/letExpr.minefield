@@ -1,7 +1,7 @@
 let two = one + one
 let one = 2 - 1
 in
-  let seven = four + two + one
+  let seven = four + three
   let three = one + two
   let four = two * two
   in

@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import common.DirectedGraph;
+import common.FreeInVisitor;
+import common.Pair;
 import common.Version;
 
 import parser.MinefieldParser;
@@ -139,90 +142,46 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
         }
     }
 
-    private List< Pair< String, List< String > > >
-    dependency( MinefieldParser.LetExpContext ctx ) {
+    private List< String > filterAllowed( List< String > ids, List< String > allowed ) {
+        return ids.stream().filter( i -> allowed.contains( i ) )
+            .collect( ArrayList< String >::new,
+                      ArrayList< String >::add,
+                      ArrayList< String >::addAll );
+    }
+
+    private DirectedGraph< String > dependency( MinefieldParser.LetExpContext ctx ) {
         var freeIn = new FreeInVisitor();
-        var map = new ArrayList< Pair< String, List< String > > >();
-
-        for( int i = 0; i < ctx.ID().size(); i++ ) {
-            var id = ctx.ID( i ).getText();
-            var free = freeIn.visit( ctx.expr( i ) );
-            map.add( new Pair< String, List< String > >( id, free ) );
-        }
-
-        return map;
-    }
-
-    private List< Pair< String, List< String > > >
-    getNoFanIn( List< Pair< String, List< String > > > g ) {
-        return g.stream().filter( v -> v.getSecond().size() == 0 )
-            .collect( ArrayList< Pair< String, List< String > > >::new,
-                      ArrayList< Pair< String, List< String > > >::add,
-                      ArrayList< Pair< String, List< String > > >::addAll );
-    }
-
-    private List< Pair< String, List< String > > >
-    getFanIn( List< Pair< String, List< String > > > g ) {
-        return g.stream().filter( v -> v.getSecond().size() != 0 )
-            .collect( ArrayList< Pair< String, List< String > > >::new,
-                      ArrayList< Pair< String, List< String > > >::add,
-                      ArrayList< Pair< String, List< String > > >::addAll );
-    }
-
-    private List< String > tsort( List< Pair< String, List< String > > > graph ) {
-        var s = getNoFanIn( graph );
-        var g = getFanIn( graph );
-        var e = new ArrayList< String >();
-
-        while( 0 < s.size() ) {
-            var node = s.remove( 0 );
-            var n = node.getFirst();
-            e.add( n );
-            for( var m : g ) {
-                if( m.getSecond().contains( n ) ) {
-                    m.getSecond().remove( n );
-                }
-            }
-            var s1 = getNoFanIn( g );
-            g = getFanIn( g ); 
-            s.addAll( s1 );
-        }
-
-        if( g.size() != 0 ) {
-            throw new Error( "cycle deteted in let expression initializers" );
-        }
-
-        return e;
-    }
-
-    @Override
-    public InterpValue visitLetExp( MinefieldParser.LetExpContext ctx ) {
-        var map = dependency( ctx );
-
+        var graph = new DirectedGraph< String >();
         var theseIds = new ArrayList< String >();
         for( var s : ctx.ID() ) {
             theseIds.add( s.getText() );
         }
 
-        var fromRemove = new ArrayList< Pair<String, String> >();
-        for( var e : map ) {
-            var edges = e.getSecond();
-            for( var x : edges ) {
-                if( !theseIds.contains( x ) ) {
-                    fromRemove.add( new Pair< String, String >( e.getFirst(), x ) );
+        for( int i = 0; i < ctx.ID().size(); i++ ) {
+            var id = ctx.ID( i ).getText();
+            var free = freeIn.visit( ctx.expr( i ) );
+            free = filterAllowed( free, theseIds );
+            if( 0 < free.size() ) {
+                for( var n : free ) {
+                    graph.edgeFromTo( n, id );                        
                 }
+            }
+            else {
+                graph.addNode( id );
             }
         }
 
-        for( var d : fromRemove ) {
-            for( var m : map ) {
-                if( d.getFirst() == m.getFirst() ) {
-                    m.getSecond().remove( d.getSecond() );
-                }
-            }
-        }
+        return graph;
+    }
 
-        var initOrder = tsort( map );
+    @Override
+    public InterpValue visitLetExp( MinefieldParser.LetExpContext ctx ) {
+        var graph = dependency( ctx );
+        var initOrder = graph.tsort();
+
+        if( initOrder.size() == 0 ) {
+            throw new Error( "cycle detected in let bindings" );
+        }
 
         tables.push();
         var st = tables.peek();
@@ -280,22 +239,4 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
     }
 
     private SymbolTableStack tables = new SymbolTableStack();
-}
-
-class Pair< U, V > {
-    public Pair( U f, V s) {
-        first = f;
-        second = s;
-    }
-
-    public U getFirst() {
-        return first;
-    }
-
-    public V getSecond() {
-        return second;
-    }
-
-    private U first;
-    private V second;
 }
