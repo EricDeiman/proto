@@ -3,27 +3,26 @@
 # the second column indicates if the byte code takes an operand
 # The third column is a description of the byte code
 
-        Halt;    false; Stop the VM
-        Push;    true;  Push the operand on the stack
-        Pop;     false; Discard the top of the stack
-        Print;   false; Print the top of the stack to the output console
-        PrintLn; false; Print a new line to the output console
-        Pow;     false; ToS - 1 raised to the power of ToS
-        Mul;     false; ToS - 1 times ToS
-        Div;     false; ToS - 1 integer divide by ToS
-        Rem;     false; ToS - 1 module ToS
-        Add;     false; ToS - 1 plus ToS
-        Sub;     false; ToS - 1 minus ToS
-        Lt;      false; ToS - 1 less than ToS
-        Lte;     false; ToS - 1 less than or equal ToS
-        Eq;      false; ToS - 1 equal to ToS
-        Neq;     false; ToS - 1 not equal to ToS
-        Gte;     false; ToS - 1 greater than or equla ToS
-        Gt;      false; ToS - 1 greater than ToS
-        JmpT;    true;  Jump to operand address if ToS is true
-        JmpF;    true;  Jump to operand address if ToS is false
-        Jmp;     true;  Always jump to operand address
-        Enter;   true;  Enter a new frame and allocate operand number of variable on the stack
-        Leave;   false; Leave a frame and remove the stack allocated variables
-        Store;   true;  Store the ToS into frame offset operand
-        Get;     true;  Get the value at frame offset operand and copy it to the ToS
+        Halt;    0; Stop the VM
+        Push;    1; Push the operand on the stack
+        Pop;     0; Discard the top of the stack
+        Print;   0; Print the top of the stack to the output console
+        PrintLn; 0; Print a new line to the output console
+        Pow;     0; ToS - 1 raised to the power of ToS
+        Mul;     0; ToS - 1 times ToS
+        Div;     0; ToS - 1 integer divide by ToS
+        Rem;     0; ToS - 1 module ToS
+        Add;     0; ToS - 1 plus ToS
+        Sub;     0; ToS - 1 minus ToS
+        Lt;      0; ToS - 1 less than ToS
+        Lte;     0; ToS - 1 less than or equal ToS
+        Eq;      0; ToS - 1 equal to ToS
+        Neq;     0; ToS - 1 not equal to ToS
+        Gte;     0; ToS - 1 greater than or equla ToS
+        Gt;      0; ToS - 1 greater than ToS
+        JmpT;    1; Jump to operand address if ToS is true
+        JmpF;    1; Jump to operand address if ToS is false
+        Jmp;     1; Always jump to operand address
+        Enter;   1; Enter a new frame and allocate operand number of variable on the stack
+        Leave;   0; Leave a frame and remove the stack allocated variables
+        Get;     2; Get the value at frame offset operand and copy it to the ToS

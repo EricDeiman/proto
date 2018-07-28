@@ -29,6 +29,7 @@ import common.BackPatch;
 import common.ByteCodes;
 import common.Labeller;
 import common.RunTimeTypes;
+import common.Utils;
 import common.VMImageBuffer;
 import common.Version;
 
@@ -43,6 +44,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
         backPatches = new BackPatch();
         constantPool = new HashMap<String, String>();
         labelMaker = new Labeller();
+        environment = new Environment();
     }
 
     @Override
@@ -60,7 +62,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
         backPatches.addBackPatch(constants, code.getPointer());
         code.writeInteger(0);
 
-        for( var ectx : ctx.specialForm() ) {
+        for( var ectx : ctx.expr() ) {
             visit( ectx );
         }
         code.writeByte(ByteCodes.Codes.Halt);
@@ -215,11 +217,84 @@ public class Compile extends MinefieldBaseVisitor< Object >
         return null;
     }
 
+    @Override
+    public Object visitLetExp( MinefieldParser.LetExpContext ctx ) {
+        var graph = Utils.dependency( ctx );
+        var initOrder = graph.tsort();
+
+        if( initOrder.size() == 0 ) {
+            throw new Error( "cycle detected in let bindings" );
+        }
+        
+        var idCount = initOrder.size();
+
+        var lookup = new HashMap< String, MinefieldParser.ExprContext>();
+        for( int i = 0; i < idCount; i++ ) {
+            var name = ctx.ID( i ).getText();
+            var value = ctx.expr( i );
+            lookup.put( name, value );
+        }
+
+        code.writeByte( ByteCodes.Codes.Enter )
+            .writeInteger( idCount );
+        environment.enter( idCount );
+
+        for( var i = 0; i < idCount; i++ ) {
+            environment.set( initOrder.get( i ), i );
+        }
+
+        for( var n : initOrder ) {
+            visit( lookup.get( n ) );
+        }
+
+        for( int j = idCount; j < ctx.expr().size(); j++ ) {
+           visit( ctx.expr( j ) );
+        }
+
+        environment.leave();
+        code.writeByte( ByteCodes.Codes.Leave );
+
+        return null;
+    }
+
+    @Override
+    public Object visitIdExpr( MinefieldParser.IdExprContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
+    @Override
+    public Object visitArithId( MinefieldParser.ArithIdContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
+    @Override
+    public Object visitCompId( MinefieldParser.CompIdContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
     public void writeCodeTo(String fileName) {
         code.writeTo(fileName);
     }
 
-    // --------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
+
+    private Object visitId( String id ) {
+        if( environment.containsKey( id ) ) {
+            var result = environment.lookUp( id );
+            var coord = result.getElement();
+            code.writeByte( ByteCodes.Codes.Get )
+                .writeInteger( coord.first() )
+                .writeInteger( coord.second() );
+        }
+        else {
+            throw new Error( "cannot find symbol " + id );                    
+        }
+
+        return null;
+    }
 
     private Object visitInteger( String integer ) {
         var value = Integer.parseInt( integer.replace( "_", "" ) );
@@ -267,4 +342,5 @@ public class Compile extends MinefieldBaseVisitor< Object >
     private BackPatch backPatches;
     private HashMap<String, String> constantPool;
     private Labeller labelMaker;
+    private Environment environment;
 }

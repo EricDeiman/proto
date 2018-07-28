@@ -87,23 +87,36 @@ public class DisAsm implements Version {
         else {
             opCode = byteCodesCache[ code.getByte( position ) ];
         }
-        var operand = 0;
-        var hasOperand = ByteCodes.HasOperand[ opCode.ordinal() ];
 
-        var operandDStr = "";
+        var operands = new long[ ByteCodes.MaxOperands ];
+        var operandCount = ByteCodes.OperandCount[ opCode.ordinal() ];
 
-        if( hasOperand ) {
+
+        for( var i = 0; i < operandCount; i++ ) {
             if( advancePointer ) {
-                operand = code.readInteger();
+                operands[ i ] = code.readInteger();
             }
             else {
-                operand = code.getInteger( position + 1 );
-            }
-            operandDStr = String.format( "0x%-6x", operand );
+                operands[ i ] = code.getInteger( position + i * 4 + 1 );
+            }            
+        }
+        var operandDStr = "";
+        var operandXStr = "";
+
+        if( operandCount == 1 ) {
+            operandXStr = String.format( "%08x", operands[ 0 ] );
+            operandDStr = String.format( "%-7d", operands[ 0 ] );
+        }
+        else if( operandCount == 2 ) {
+            operandXStr = String.format( "%03x  %03x",
+                                         operands[ 0 ],
+                                         operands[ 1 ]);
+            operandDStr = String.format( "%-3d %-3d",
+                                         operands[ 0 ],
+                                         operands[ 1 ] );
         }
 
-        String operandXStr = hasOperand ? String.format("%08x", operand) : "";
-        buffer.append( String.format( "%04x:  %02x %8s   %-7s %-10s",
+        buffer.append( String.format( "%04x:  %02x %9s   %-7s %-10s",
                                       position,
                                       opCode.ordinal(),
                                       operandXStr,
@@ -116,7 +129,8 @@ public class DisAsm implements Version {
     public void dumpInstructions() {
         code.setPointer( sizeOfHeader );
 
-        while( ByteCodes.Codes.Halt.ordinal() != code.getByte( code.getPointer() ) ) {
+        while( ByteCodes.Codes.Halt.ordinal() !=
+               code.getByte( code.getPointer() ) ) {
             os.println( dumpInstruction() );
         }
 
