@@ -128,11 +128,14 @@ public class DisAsm implements Version {
 
     public void dumpInstructions() {
         code.setPointer( sizeOfHeader );
+        var done = false;
 
-        while( ByteCodes.Codes.Halt.ordinal() !=
-               code.getByte( code.getPointer() ) ) {
+        do {
+            done = ByteCodes.Codes.Halt.ordinal() ==
+                   code.getByte( code.getPointer() );
             os.println( dumpInstruction() );
         }
+        while( !done );
 
         return;
     }
