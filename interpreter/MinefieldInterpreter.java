@@ -29,6 +29,7 @@ import java.util.Map;
 import common.DirectedGraph;
 import common.FreeInVisitor;
 import common.Pair;
+import common.Utils;
 import common.Version;
 
 import parser.MinefieldParser;
@@ -142,41 +143,9 @@ public class MinefieldInterpreter extends MinefieldBaseVisitor< InterpValue >
         }
     }
 
-    private List< String > filterAllowed( List< String > ids, List< String > allowed ) {
-        return ids.stream().filter( i -> allowed.contains( i ) )
-            .collect( ArrayList< String >::new,
-                      ArrayList< String >::add,
-                      ArrayList< String >::addAll );
-    }
-
-    private DirectedGraph< String > dependency( MinefieldParser.LetExpContext ctx ) {
-        var freeIn = new FreeInVisitor();
-        var graph = new DirectedGraph< String >();
-        var theseIds = new ArrayList< String >();
-        for( var s : ctx.ID() ) {
-            theseIds.add( s.getText() );
-        }
-
-        for( int i = 0; i < ctx.ID().size(); i++ ) {
-            var id = ctx.ID( i ).getText();
-            var free = freeIn.visit( ctx.expr( i ) );
-            free = filterAllowed( free, theseIds );
-            if( 0 < free.size() ) {
-                for( var n : free ) {
-                    graph.edgeFromTo( n, id );                        
-                }
-            }
-            else {
-                graph.addNode( id );
-            }
-        }
-
-        return graph;
-    }
-
     @Override
     public InterpValue visitLetExp( MinefieldParser.LetExpContext ctx ) {
-        var graph = dependency( ctx );
+        var graph = Utils.dependency( ctx );
         var initOrder = graph.tsort();
 
         if( initOrder.size() == 0 ) {

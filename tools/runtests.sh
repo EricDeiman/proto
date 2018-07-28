@@ -4,7 +4,7 @@ do
     java -jar jars/compilervm.jar $f
     java -jar jars/virtualmachine.jar ${f/.minefield/.mo} > $f.out.vm
     java -jar jars/compilerasm.jar $f
-    gcc ${f/.minefield/.s} compilerasm/minefieldrt.o -lm -o ${f/.minefield/}
+    gcc ${f/.minefield/.s} compilerasm/minefieldrt.o -lm -g -o ${f/.minefield/}
     ./${f/.minefield/} > $f.out.asm
     cmp -s $f.out.i $f.out.vm
     if [ $? -ne 0 ]; then

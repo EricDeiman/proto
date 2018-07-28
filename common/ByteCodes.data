@@ -20,6 +20,10 @@
         Neq;     false; ToS - 1 not equal to ToS
         Gte;     false; ToS - 1 greater than or equla ToS
         Gt;      false; ToS - 1 greater than ToS
-        JmpT;    true;  Jump to operand if ToS is true
-        JmpF;    true;  Jump to operand if ToS is false
-        Jmp;     true;  Always just to operand
+        JmpT;    true;  Jump to operand address if ToS is true
+        JmpF;    true;  Jump to operand address if ToS is false
+        Jmp;     true;  Always jump to operand address
+        Enter;   true;  Enter a new frame and allocate operand number of variable on the stack
+        Leave;   false; Leave a frame and remove the stack allocated variables
+        Store;   true;  Store the ToS into frame offset operand
+        Get;     true;  Get the value at frame offset operand and copy it to the ToS
