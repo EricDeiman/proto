@@ -23,7 +23,8 @@ import common.DisAsm;
 
 public interface Trace {
     public void preProgram( DisAsm code, Deque< Integer > stack );
-    public void preInstruction( DisAsm code, Deque< Integer > stack );
+    public void preInstruction( DisAsm code, Deque< Integer > stack,
+                                int frameBase );
     public void postInstruction( DisAsm code, Deque< Integer > stack );
     public void postProgram( DisAsm code, Deque< Integer > stack );
     public void io( String data );

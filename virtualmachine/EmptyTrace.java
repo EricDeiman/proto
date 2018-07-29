@@ -28,7 +28,8 @@ public class EmptyTrace implements Trace {
     }
 
     @Override
-    public void preInstruction( DisAsm code, Deque< Integer > stack ) {
+    public void preInstruction( DisAsm code, Deque< Integer > stack,
+                                int frameBase ) {
         return;
     }
 

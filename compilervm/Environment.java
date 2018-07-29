@@ -70,7 +70,7 @@ public class Environment {
         env = new ArrayDeque< HashMap< String, Integer > >();
     }
 
-    public void enter( int c ) {
+    public void enter() {
         env.push( new HashMap< String, Integer >() );
     }
 

@@ -235,9 +235,8 @@ public class Compile extends MinefieldBaseVisitor< Object >
             lookup.put( name, value );
         }
 
-        code.writeByte( ByteCodes.Codes.Enter )
-            .writeInteger( idCount );
-        environment.enter( idCount );
+        code.writeByte( ByteCodes.Codes.Enter );
+        environment.enter();
 
         for( var i = 0; i < idCount; i++ ) {
             environment.set( initOrder.get( i ), i );

@@ -20,8 +20,9 @@
 import java.io.InputStream;
 import java.io.File;
 import java.io.PrintStream;
-import java.util.ArrayDeque;
+
 import java.util.Deque;
+import java.util.LinkedList;
 
 import static java.lang.Math.pow;
 
@@ -41,11 +42,12 @@ public class VirtMach implements Version {
         code = new VMImageBuffer();
         code.readFrom( in  );
         disAsm = new DisAsm( code );
-        stack = new ArrayDeque< Integer >();
+        stack = new LinkedList< Integer >();
         byteCodesCache = ByteCodes.Codes.values();
         runTimeTypesCache = RunTimeTypes.values();
         this.trace = trace;
         this.os = os;
+        frameBase = 0;
 
         // Check signature
         for( var b : name.getBytes() ) {
@@ -73,7 +75,7 @@ public class VirtMach implements Version {
 
         loop:
         while( true ) {
-            trace.preInstruction( disAsm, stack );
+            trace.preInstruction( disAsm, stack, frameBase );
             ByteCodes.Codes op = byteCodesCache[ code.readByte() ];
             switch( op ) {
             case Halt:
@@ -129,7 +131,8 @@ public class VirtMach implements Version {
                 leftValue = stack.pop();
                 var destination = code.readInteger();
                 if( leftType != RunTimeTypes.iBoolean ) {
-                    throw new Error( "attempt to use " + leftType + " as a boolean" );
+                    throw new Error( "attempt to use " + leftType +
+                                     " as a boolean" );
                 }
                 if( leftValue != 0 ) {
                     code.setPointer( destination );
@@ -140,7 +143,8 @@ public class VirtMach implements Version {
                 leftValue = stack.pop();
                 destination = code.readInteger();
                 if( leftType != RunTimeTypes.iBoolean ) {
-                    throw new Error( "attempt to use " + leftType + " as a boolean" );
+                    throw new Error( "attempt to use " + leftType +
+                                     " as a boolean" );
                 }
                 if( leftValue == 0 ) {
                     code.setPointer( destination );
@@ -150,6 +154,35 @@ public class VirtMach implements Version {
                 destination = code.readInteger();
                 code.setPointer( destination );
                 break;
+            case Enter:
+                stack.push( frameBase );
+                frameBase = stack.size();
+                break;
+            case Leave:
+                while( stack.size() > frameBase ) {
+                    stack.pop();
+                }
+                frameBase = stack.pop();
+                break;
+            case Get:
+                {
+                    int frameOffset = code.readInteger();
+                    int stackOffset = code.readInteger();
+                    int oldFrameBase = frameBase;
+                    while( frameOffset > 0 ) {
+                        oldFrameBase = stack.get( stack.size() -
+                                                  oldFrameBase + 1 );
+                        frameOffset--;
+                    }
+                    int frameBaseIndex = stack.size() - 1 - oldFrameBase;
+                    int value, type;
+                    value = stack.get( frameBaseIndex - stackOffset * 2 );
+                    type = stack.get( frameBaseIndex - stackOffset * 2 - 1 );
+                    stack.push( value );
+                    stack.push( type );
+                }
+                break;
+
             default:
                 break;
             }
@@ -165,7 +198,8 @@ public class VirtMach implements Version {
                          ByteCodes.Codes op,
                          RunTimeTypes rightType, int right ) {
         if( leftType != rightType ) {
-            throw new Error( "cannot compare " + leftType + " with " + rightType );
+            throw new Error( "cannot compare " + leftType +
+                             " with " + rightType );
         }
 
         int result = 0;
@@ -326,10 +360,11 @@ public class VirtMach implements Version {
     }
 
     private VMImageBuffer code;
-    private Deque< Integer > stack;
+    private LinkedList< Integer > stack;
     private ByteCodes.Codes[] byteCodesCache;
     private RunTimeTypes[] runTimeTypesCache;
     private Trace trace;
     private PrintStream os;
     private DisAsm disAsm;
+    private Integer frameBase;
 }

@@ -3,7 +3,7 @@ public class TestEnv {
     public static void main( String[] args ) {
         var myEnv = new Environment();
 
-        myEnv.enter( 0 );
+        myEnv.enter();
 
         myEnv.set( "Gandalf", 0 );
         myEnv.set( "Frodo", 1 );
@@ -14,7 +14,7 @@ public class TestEnv {
         var coord = result.getElement();
         assert( coord.first() == 0 && coord.second() == 1 );
 
-        myEnv.enter( 0 );
+        myEnv.enter();
 
         myEnv.set( "Sauron", 0 );
         myEnv.set( "Saruman", 1 );

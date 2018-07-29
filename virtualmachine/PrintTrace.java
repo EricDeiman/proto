@@ -30,15 +30,21 @@ public class PrintTrace extends EmptyTrace {
         byteCodesCache = ByteCodes.Codes.values();
     }
 
-    public void preInstruction( DisAsm disAsm, Deque<Integer> stack ) {
+    public void preInstruction( DisAsm disAsm, Deque<Integer> stack,
+                                int frameBase ) {
 
         out.print( "\t\t" + disAsm.dumpInstruction( false ) );
 
+        int size = stack.size();
         out.print("  [ ");
         for( var i : stack ) {
-            out.print( String.format( "%d ", i ) );            
+            if( size == frameBase ) {
+                out.print( "| " );
+            }
+            out.print( String.format( "%d ", i ) );
+            size--;
         }
-        out.println(" ]");
+        out.println("]");
 
         return;
     }

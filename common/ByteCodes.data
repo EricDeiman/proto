@@ -23,6 +23,6 @@
         JmpT;    1; Jump to operand address if ToS is true
         JmpF;    1; Jump to operand address if ToS is false
         Jmp;     1; Always jump to operand address
-        Enter;   1; Enter a new frame and allocate operand number of variable on the stack
+        Enter;   0; Enter a new frame and allocate operand number of variable on the stack
         Leave;   0; Leave a frame and remove the stack allocated variables
         Get;     2; Get the value at frame offset operand and copy it to the ToS
