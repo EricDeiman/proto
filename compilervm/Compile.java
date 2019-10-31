@@ -27,7 +27,10 @@ import java.util.Vector;
 
 import common.BackPatch;
 import common.ByteCodes;
+import common.Coord;
+import common.Environment;
 import common.Labeller;
+import common.Maybe;
 import common.RunTimeTypes;
 import common.Utils;
 import common.VMImageBuffer;

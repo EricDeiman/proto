@@ -17,53 +17,12 @@
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
 */
 
+package common;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-
-class Maybe< T > {
-    public Maybe() {
-        hasElement = false;
-    }
-
-    public Maybe( T t ) {
-        hasElement = true;
-        element = t;
-    }
-
-    public boolean hasElement() {
-        return hasElement;
-    }
-
-    public T getElement() {
-        if( !hasElement ) {
-            throw new Error( "maybe has no element" );
-        }
-        return element;
-    }
-
-    private boolean hasElement;
-    private T element;
-}
-
-class Coord< U, V > {
-    public Coord( U x, V y ) {
-        first = x;
-        second = y;
-    }
-
-    public U first() {
-        return first;
-    }
-
-    public V second() {
-        return second;
-    }
-
-    private U first;
-    private V second;
-}
 
 public class Environment {
     public Environment() {

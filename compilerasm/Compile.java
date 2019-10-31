@@ -5,16 +5,18 @@
   This file is part of the minefield programming language.
 
   The minefield programming language is free software: you can redistribute it
-  and/ormodify it under the terms of the GNU General Public License as published by the
-  Free Software Foundation, either version 3 of the License, or (at your option) any
-  later version.
+  and/ormodify it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or (at your
+  option) any later version.
 
-  The minefield programming language is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  The minefield programming language is distributed in the hope that it will be
+  useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  Public License for more details.
 
-  You should have received a copy of the GNU General Public License along with the
-  minefield programming language. If not, see <https://www.gnu.org/licenses/>
+  You should have received a copy of the GNU General Public License along with
+  the minefield programming language. If not, see
+  <https://www.gnu.org/licenses/>
 */
 
 import org.antlr.v4.runtime.*;
@@ -27,8 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import common.Environment;
 import common.Labeller;
 import common.RunTimeTypes;
+import common.Utils;
 import common.Version;
 
 import parser.MinefieldBaseVisitor;
@@ -41,6 +45,7 @@ public class Compile extends MinefieldBaseVisitor< Object >
         code = new StringBuffer();
         constantPool = new HashMap<String, String>();
         labelMaker = new Labeller( ".string" );
+        environment = new Environment();
 
         percentD = labelMaker.make();
         constantPool.put( percentD, "%d".intern() );
@@ -52,13 +57,15 @@ public class Compile extends MinefieldBaseVisitor< Object >
         constantPool.put( labelMaker.make(), ">=".intern() );
         constantPool.put( labelMaker.make(), ">".intern() );
 
-        howManyRuntimeStacks = 1;
+        howManyRuntimeStacks = 2;
     }
 
     @Override
     public Object visitProg( MinefieldParser.ProgContext ctx ) {
 
-        code.append( String.format( "\t.ident \"%s build %d\"\n", name, build ) );
+        code.append( String.format( "\t.ident \"%s build %d\"\n",
+                                    name,
+                                    build ) );
         code.append( "\t.text\n\t.globl main\n\nmain:\n" );
         
         code.append( "\tpushq %rbp\n" )
@@ -66,9 +73,13 @@ public class Compile extends MinefieldBaseVisitor< Object >
             .append( "\tsubq $" + (8 + howManyRuntimeStacks * 8) + ", %rsp\n")
             .append( "\tmovl $1024, %edi\n" )
             .append( "\tcall mkStack@PLT\n")
-            .append( "\tmovq %rax, " + valueStack + "\n\n" );
+            .append( "\tmovq %rax, " + valueStack + "\n\n" )
+            .append( "\tmovl $1024, %edi\n" )
+            .append( "\tcall mkStack@PLT\n")
+            .append( "\tmovq %rax, " + frameBaseStack + "\n\n" );
 
-        for( var ectx : ctx.specialForm() ) {
+
+        for( var ectx : ctx.expr() ) {
             visit( ectx );
         }
 
@@ -177,7 +188,8 @@ public class Compile extends MinefieldBaseVisitor< Object >
         visit( ctx.right );
 
         code.append( "\tmovq " + valueStack + ", %rdi\n" )
-            .append( "\tleaq " + constantLookUp( ctx.op.getText() )  + "(%rip), %rsi\n" )
+            .append( "\tleaq " + constantLookUp( ctx.op.getText() )  +
+                     "(%rip), %rsi\n" )
             .append( "\tcall meflCompare@PLT\n\n" );
 
         return null;
@@ -243,6 +255,78 @@ public class Compile extends MinefieldBaseVisitor< Object >
         return null;
     }
 
+    @Override
+    public Object visitLetExp( MinefieldParser.LetExpContext ctx ) {
+        var graph = Utils.dependency( ctx );
+        var initOrder = graph.tsort();
+
+        if( initOrder.size() == 0 ) {
+            throw new Error( "cycle detected in let bindings" );
+        }
+        
+        var idCount = initOrder.size();
+
+        var lookup = new HashMap< String, MinefieldParser.ExprContext>();
+        for( int i = 0; i < idCount; i++ ) {
+            var name = ctx.ID( i ).getText();
+            var value = ctx.expr( i );
+            lookup.put( name, value );
+        }
+
+        // Push the index to the top of the value stack onto the framebase
+        // stack
+        code.append( "# let " + ctx.ID( 0 ).getText() + "\n" );
+        code.append( "\tmovq	" + valueStack + ", %rax  # valueStack \n" )
+            .append( "\tmovl	4(%rax), %eax\n" ) 
+            .append( "\tmovslq %eax, %rdx\n" )
+            .append( "\tmovq " + frameBaseStack + ", %rax  # frameBaseStack\n" )
+            .append( "\tmovq	%rdx, %rsi\n" )
+            .append( "\tmovq	%rax, %rdi\n" )
+            .append( "\tcall push@PLT\n\n" );
+        environment.enter();
+
+        for( var i = 0; i < idCount; i++ ) {
+            environment.set( initOrder.get( i ), i );
+        }
+
+        code.append( "# initializers\n" );
+        for( var n : initOrder ) {
+            code.append( "\n# " + n + "\n" );
+            visit( lookup.get( n ) );
+        }
+
+        code.append( "# body\n" );
+        for( int j = idCount; j < ctx.expr().size(); j++ ) {
+            code.append( "\n# " + ctx.getText() + "\n" );
+           visit( ctx.expr( j ) );
+        }
+
+        environment.leave();
+        // Pop the framebase stack
+        code.append( "\tmovq	" + frameBaseStack + ", %rdi  # frameBaseStack\n" )
+            .append( "\tcall pop@PLT\n\n" );
+
+        return null;
+    }
+
+    @Override
+    public Object visitIdExpr( MinefieldParser.IdExprContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
+    @Override
+    public Object visitArithId( MinefieldParser.ArithIdContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
+    @Override
+    public Object visitCompId( MinefieldParser.CompIdContext ctx ) {
+        var id = ctx.ID().getText();
+        return visitId( id );
+    }
+
     public void writeCodeTo(String fileName) {
         try {
             FileOutputStream fo = new FileOutputStream(fileName);
@@ -253,6 +337,53 @@ public class Compile extends MinefieldBaseVisitor< Object >
         catch(Exception e) {
             throw new Error(e);
         }
+    }
+
+    // ----------------------------------------------------------------------
+
+    private Object visitId( String id ) {
+        if( environment.containsKey( id ) ) {
+            var result = environment.lookUp( id );
+            var coord = result.getElement();
+            code.append( "# lookup " + id + " value\n" );
+            code.append( "\tmovq " + frameBaseStack + ", %rax  # frameBaseStack\n")
+                .append( "\tmovl 4(%rax), %eax\n")
+                .append( "\tleal -" + (1 + coord.first()) + "(%rax), %edx # coord.first() = " + coord.first() + "\n")
+                .append( "\tmovq " + frameBaseStack + ", %rax  # frameBaseStack\n")
+                .append( "\tmovslq %edx, %rdx\n")
+                .append( "\tmovq 8(%rax, %rdx, 8), %rax\n")
+                .append( "\taddl $" + ( 2 * coord.second() ) + ",%eax  # coord.second() = " + coord.second() + " \n")
+                .append( "\tmovl %eax, %edx\n")
+                .append( "\tmovq " + valueStack + ",%rax  # valueStack\n")
+                .append( "\tmovl %edx, %esi\n")
+                .append( "\tmovq %rax, %rdi\n")
+                .append( "\tcall get@PLT\n")
+                .append( "\tmovq %rax, %rsi\n")
+                .append( "\tmovq " + valueStack + ", %rdi  # valueStack\n" )
+                .append( "\tcall push@PLT\n");
+
+            code.append( "# lookup " + id + " type\n" );
+            code.append( "\tmovq " + frameBaseStack + ", %rax  # frameBaseStack\n")
+                .append( "\tmovl 4(%rax), %eax\n")
+                .append( "\tleal -" + (1 + coord.first()) + "(%rax), %edx  # coord.first() = " + coord.first() + "\n")
+                .append( "\tmovq " + frameBaseStack + ", %rax  # frameBaseStack\n")
+                .append( "\tmovslq %edx, %rdx\n")
+                .append( "\tmovq 8(%rax, %rdx, 8), %rax\n")
+                .append( "\taddl $" + ( 2 * coord.second() + 1 ) + ",%eax  # coord.second() = " + coord.second() + " \n")
+                .append( "\tmovl %eax, %edx\n")
+                .append( "\tmovq " + valueStack + ",%rax  # valueStack\n")
+                .append( "\tmovl %edx, %esi\n")
+                .append( "\tmovq %rax, %rdi\n")
+                .append( "\tcall get@PLT\n")
+                .append( "\tmovq %rax, %rsi\n")
+                .append( "\tmovq " + valueStack + ", %rdi  # valueStack\n" )
+                .append( "\tcall push@PLT\n");
+        }
+        else {
+            throw new Error( "cannot find symbol " + id );
+        }
+
+        return null;
     }
 
     private Object visitInteger( String integer ) {
@@ -308,4 +439,6 @@ public class Compile extends MinefieldBaseVisitor< Object >
     private String percentD;
     private int howManyRuntimeStacks;
     private String valueStack = "-8(%rbp)";
+    private String frameBaseStack = "-16(%rbp)";
+    private Environment environment;
 }

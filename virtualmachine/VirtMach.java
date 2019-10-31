@@ -170,8 +170,14 @@ public class VirtMach implements Version {
                     int stackOffset = code.readInteger();
                     int oldFrameBase = frameBase;
                     while( frameOffset > 0 ) {
+                        // System.err.println( String.format( "In Get: frameOffset = %d, " +
+                        //                                    " stack depth = %d" +
+                        //                                    " oldFrameBase = %d",
+                        //                                    frameOffset,
+                        //                                    stack.size(),
+                        //                                    oldFrameBase ) );
                         oldFrameBase = stack.get( stack.size() -
-                                                  oldFrameBase + 1 );
+                                                  oldFrameBase /* + 1 */ );
                         frameOffset--;
                     }
                     int frameBaseIndex = stack.size() - 1 - oldFrameBase;

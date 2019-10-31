@@ -1,0 +1,2 @@
+"Surprisingly, you should see this"
+print let ignore = 33 in "You should not see this" end println

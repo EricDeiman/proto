@@ -1,3 +1,6 @@
+import common.Coord;
+import common.Environment;
+import common.Maybe;
 
 public class TestEnv {
     public static void main( String[] args ) {

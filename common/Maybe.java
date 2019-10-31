@@ -17,36 +17,29 @@
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef MINEFIELD_H
-#define MINEFIELD_H
+package common;
 
-typedef struct {
-  int size;
-  int top;
-  long memory[];
-} stack;
+public class Maybe< T > {
+    public Maybe() {
+        hasElement = false;
+    }
 
-enum RunTimeTypes {
-  iUnknown,
-  iInteger,
-  iString,
-  iBoolean
-};
+    public Maybe( T t ) {
+        hasElement = true;
+        element = t;
+    }
 
-stack *mkStack( int );
-void push( stack *, long );
-long pop( stack * );
-long get( stack *, int );
+    public boolean hasElement() {
+        return hasElement;
+    }
 
-void printTos( stack * );
+    public T getElement() {
+        if( !hasElement ) {
+            throw new Error( "maybe has no element" );
+        }
+        return element;
+    }
 
-void meflPow( stack * );
-void meflMul( stack * );
-void meflDiv( stack * );
-void meflRem( stack * );
-void meflAdd( stack * );
-void meflSub( stack * );
-
-void meflCompare( stack *, char * );
-
-#endif
+    private boolean hasElement;
+    private T element;
+}

@@ -17,36 +17,23 @@
   minefield programming language. If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef MINEFIELD_H
-#define MINEFIELD_H
+package common;
 
-typedef struct {
-  int size;
-  int top;
-  long memory[];
-} stack;
+public class Coord< U, V > {
+    public Coord( U x, V y ) {
+        first = x;
+        second = y;
+    }
 
-enum RunTimeTypes {
-  iUnknown,
-  iInteger,
-  iString,
-  iBoolean
-};
+    public U first() {
+        return first;
+    }
 
-stack *mkStack( int );
-void push( stack *, long );
-long pop( stack * );
-long get( stack *, int );
+    public V second() {
+        return second;
+    }
 
-void printTos( stack * );
+    private U first;
+    private V second;
+}
 
-void meflPow( stack * );
-void meflMul( stack * );
-void meflDiv( stack * );
-void meflRem( stack * );
-void meflAdd( stack * );
-void meflSub( stack * );
-
-void meflCompare( stack *, char * );
-
-#endif

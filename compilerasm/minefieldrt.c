@@ -60,6 +60,15 @@ long pop( stack *s ) {
   return -1;
 }
 
+long get( stack *s, int i ) {
+  if( i < s->top ) {
+    return s->memory[ i ];
+  }
+
+  printf( "error: stack does not have %d elements", i );
+  exit( -1 );
+}
+
 void printTos( stack *s ) {
   long type = pop( s );
   long value = pop( s );
@@ -86,15 +95,18 @@ void meflPow( stack *s ) {
   long rightValue = pop( s );
   long leftType = pop( s );
   long leftValue = pop( s );
+  long result = 1;
 
   if( leftType != rightType || leftType != iInteger ) {
     printf( "%s", message );
     exit( -1 );
   }
 
-  leftValue = ( int )pow( leftValue, rightValue );
+  for( ; 0 < rightValue; rightValue-- ) {
+    result *= leftValue;
+  }
 
-  push( s, leftValue );
+  push( s, result );
   push( s, leftType );
 }
 
