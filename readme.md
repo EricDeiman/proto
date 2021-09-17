@@ -1,5 +1,5 @@
 # Proto
-This is the prototype implementation of the Minefield programming language.  This is an expression based language with a slight SML flavor.
+This is the prototype implementation of the Minefield programming language.  This is an expression-based language with a slight SML flavor.
 
 # Directories
 The `common` directory holds a number of source files that are used in several of the other parts of the language.
